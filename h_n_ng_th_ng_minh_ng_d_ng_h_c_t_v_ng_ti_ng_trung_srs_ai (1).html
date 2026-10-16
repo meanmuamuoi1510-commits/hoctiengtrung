@@ -1,0 +1,3546 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="system">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hán Ngữ Thông Minh - Ứng Dụng Học Từ Vựng Tiếng Trung (SRS & AI)</title>
+  <!-- Nạp thư viện ngoài từ jsDelivr (ghim phiên bản ổn định) -->
+  <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.19.6/dist/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5.0/dist/hanzi-writer.min.js"></script>
+  <style>
+    /* ==========================================================================
+       1. BIẾN CSS & CHẾ ĐỘ SÁNG / TỐI (THEO HỆ THỐNG HOẶC TÙY CHỌN)
+       ========================================================================== */
+    :root {
+      --bg-body: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-subtle: #f1f5f9;
+      --bg-hover: #e2e8f0;
+      --text-main: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --primary: #dc2626;
+      --primary-hover: #b91c1c;
+      --primary-soft: #fef2f2;
+      --accent: #2563eb;
+      --accent-soft: #eff6ff;
+      --success: #16a34a;
+      --success-soft: #f0fdf4;
+      --warning: #d97706;
+      --warning-soft: #fffbeb;
+      --danger: #e11d48;
+      --danger-soft: #fff1f2;
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-hanzi: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Heiti SC", sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg-body: #0f172a;
+        --bg-card: #1e293b;
+        --bg-subtle: #334155;
+        --bg-hover: #475569;
+        --text-main: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --text-muted: #94a3b8;
+        --border-color: #334155;
+        --primary: #ef4444;
+        --primary-hover: #f87171;
+        --primary-soft: rgba(239, 68, 68, 0.15);
+        --accent: #3b82f6;
+        --accent-soft: rgba(59, 130, 246, 0.15);
+        --success: #22c55e;
+        --success-soft: rgba(34, 197, 94, 0.15);
+        --warning: #f59e0b;
+        --warning-soft: rgba(245, 158, 11, 0.15);
+        --danger: #f43f5e;
+        --danger-soft: rgba(244, 63, 94, 0.15);
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg-body: #0f172a;
+      --bg-card: #1e293b;
+      --bg-subtle: #334155;
+      --bg-hover: #475569;
+      --text-main: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      --primary: #ef4444;
+      --primary-hover: #f87171;
+      --primary-soft: rgba(239, 68, 68, 0.15);
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.15);
+      --success: #22c55e;
+      --success-soft: rgba(34, 197, 94, 0.15);
+      --warning: #f59e0b;
+      --warning-soft: rgba(245, 158, 11, 0.15);
+      --danger: #f43f5e;
+      --danger-soft: rgba(244, 63, 94, 0.15);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-ui);
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Font chữ Hán to, rõ nét */
+    .hanzi-text {
+      font-family: var(--font-hanzi);
+      font-weight: 500;
+      letter-spacing: 0.03em;
+    }
+
+    .hanzi-lg {
+      font-family: var(--font-hanzi);
+      font-size: 2.25rem;
+      line-height: 1.25;
+      font-weight: 600;
+    }
+
+    .hanzi-xl {
+      font-family: var(--font-hanzi);
+      font-size: 3.5rem;
+      line-height: 1.2;
+      font-weight: 600;
+    }
+
+    /* ==========================================================================
+       2. HEADER, BANNER CẢNH BÁO & THANH ĐIỀU HƯỚNG TAB
+       ========================================================================== */
+    .app-header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0.75rem 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-hanzi);
+      font-size: 1.35rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .brand-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+    }
+
+    .nav-tabs {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      gap: 0.25rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .nav-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab-btn {
+      appearance: none;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .tab-btn:hover {
+      color: var(--primary);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-badge {
+      background: var(--primary);
+      color: #fff;
+      font-size: 0.72rem;
+      padding: 0.1rem 0.42rem;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .backup-banner {
+      background: var(--warning-soft);
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-size: 0.85rem;
+      padding: 0.55rem 1rem;
+    }
+
+    .backup-banner-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    /* ==========================================================================
+       3. LAYOUT CHUNG, CARDS, FORMS & BUTTONS
+       ========================================================================== */
+    .main-container {
+      max-width: 1120px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.25rem 1rem 3rem;
+      flex: 1;
+    }
+
+    .tab-panel {
+      display: none;
+      animation: fadeIn 0.18s ease-out;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1rem;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .card-title {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.85rem;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.85rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .form-label {
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .input, .select, .textarea {
+      width: 100%;
+      padding: 0.58rem 0.75rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-body);
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.92rem;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .input:focus, .select:focus, .textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      padding: 0.55rem 0.95rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: background-color 0.15s, transform 0.1s, border-color 0.15s;
+      text-decoration: none;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-accent:hover:not(:disabled) {
+      filter: brightness(1.08);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border-color: var(--border-color);
+      color: var(--text-main);
+    }
+
+    .btn-outline:hover:not(:disabled) {
+      background: var(--bg-subtle);
+    }
+
+    .btn-soft {
+      background: var(--bg-subtle);
+      color: var(--text-main);
+    }
+
+    .btn-soft:hover:not(:disabled) {
+      background: var(--bg-hover);
+    }
+
+    .btn-danger {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-sm {
+      padding: 0.35rem 0.65rem;
+      font-size: 0.8rem;
+    }
+
+    /* ==========================================================================
+       4. DANH SÁCH TỪ VỰNG & THẺ TỪ
+       ========================================================================== */
+    .vocab-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 0.9rem;
+    }
+
+    .vocab-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.75rem;
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+
+    .vocab-item:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    .vocab-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .vocab-pinyin {
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 0.98rem;
+      margin-top: 0.15rem;
+    }
+
+    .vocab-meaning {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-top: 0.25rem;
+    }
+
+    .vocab-meta {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.45rem;
+    }
+
+    .tag {
+      font-size: 0.74rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .tag-pos {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .tag-srs {
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    .vocab-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* ==========================================================================
+       5. FLASHCARD ÔN TẬP SM-2
+       ========================================================================== */
+    .srs-container {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .flashcard {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      min-height: 320px;
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      user-select: none;
+      transition: border-color 0.2s;
+    }
+
+    .flashcard:hover {
+      border-color: var(--primary);
+    }
+
+    .flashcard-hint {
+      position: absolute;
+      bottom: 0.85rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .srs-grade-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.6rem;
+      margin-top: 1rem;
+    }
+
+    .grade-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.65rem 0.4rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.1s, background-color 0.15s;
+    }
+
+    .grade-btn:hover {
+      background: var(--bg-subtle);
+    }
+
+    .grade-btn .grade-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .grade-btn .grade-days {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    .grade-again { border-bottom: 3px solid var(--danger); }
+    .grade-hard  { border-bottom: 3px solid var(--warning); }
+    .grade-good  { border-bottom: 3px solid var(--accent); }
+    .grade-easy  { border-bottom: 3px solid var(--success); }
+
+    /* ==========================================================================
+       6. QUIZ NHIỀU DẠNG
+       ========================================================================== */
+    .quiz-option {
+      width: 100%;
+      text-align: left;
+      padding: 0.85rem 1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-body);
+      color: var(--text-main);
+      font-size: 0.96rem;
+      font-family: inherit;
+      cursor: pointer;
+      margin-bottom: 0.6rem;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .quiz-option:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .quiz-option.correct {
+      border-color: var(--success);
+      background: var(--success-soft);
+      color: var(--success);
+      font-weight: 700;
+    }
+
+    .quiz-option.wrong {
+      border-color: var(--danger);
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .matching-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .match-card {
+      padding: 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--border-color);
+      background: var(--bg-body);
+      text-align: center;
+      cursor: pointer;
+      font-weight: 600;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .match-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .match-card.matched {
+      border-color: var(--success);
+      background: var(--success-soft);
+      opacity: 0.55;
+      pointer-events: none;
+    }
+
+    .match-card.error {
+      border-color: var(--danger);
+      background: var(--danger-soft);
+    }
+
+    /* ==========================================================================
+       7. BIỂU ĐỒ THỐNG KÊ 14 NGÀY & MODAL VIẾT CHỮ / AI
+       ========================================================================== */
+    .stat-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .stat-label {
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .chart-14d {
+      display: grid;
+      grid-template-columns: repeat(14, 1fr);
+      gap: 0.35rem;
+      align-items: end;
+      height: 180px;
+      padding-top: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .chart-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100%;
+    }
+
+    .chart-bar {
+      width: 100%;
+      max-width: 28px;
+      background: var(--primary);
+      border-radius: 4px 4px 0 0;
+      min-height: 4px;
+      transition: height 0.3s ease;
+    }
+
+    .chart-count {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.2rem;
+      font-weight: 600;
+    }
+
+    .chart-date {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* Modal chung */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 100;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      max-width: 680px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 1.25rem;
+      box-shadow: var(--shadow-md);
+    }
+
+    .hanzi-writer-box {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+
+    .writer-char-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .writer-target {
+      width: 160px;
+      height: 160px;
+      background: var(--bg-card);
+      border: 1px dashed var(--border-color);
+      border-radius: var(--radius-sm);
+    }
+
+    /* Toast thông báo thay cho alert() */
+    .toast-container {
+      position: fixed;
+      bottom: 1.25rem;
+      right: 1.25rem;
+      z-index: 120;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-width: 340px;
+    }
+
+    .toast {
+      background: var(--text-main);
+      color: var(--bg-card);
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-md);
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .ai-box {
+      background: var(--bg-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem;
+      margin-top: 0.6rem;
+      font-size: 0.88rem;
+    }
+
+    .ai-box h4 {
+      font-size: 0.85rem;
+      color: var(--primary);
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    @media (max-width: 640px) {
+      .hanzi-xl { font-size: 2.75rem; }
+      .srs-grade-grid { grid-template-columns: repeat(2, 1fr); }
+      .chart-date { font-size: 0.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Banner nhắc nhở sao lưu dữ liệu định kỳ -->
+  <div class="backup-banner" id="backupBanner">
+    <div class="backup-banner-inner">
+      <span>
+        <strong>Tự động lưu 100%:</strong> Mọi từ vựng, tiến độ và API Key đã được trình duyệt tự động lưu ngay khi bạn thao tác (không cần nhập lại JSON mỗi lần mở). Muốn đồng bộ tự động giữa nhiều thiết bị hoặc lưu thẳng ra file trên ổ cứng, hãy bật <strong>Đồng bộ tự động</strong> trong Cài đặt.
+      </span>
+      <div style="display:flex; gap:0.4rem; align-items:center;">
+        <button type="button" class="btn btn-sm btn-primary" id="btnQuickSetupSync">☁️ Cài đặt Đồng bộ tự động</button>
+        <button type="button" class="btn btn-sm btn-outline" id="btnQuickExport">Xuất JSON ngay</button>
+        <button type="button" class="btn btn-sm btn-soft" id="btnDismissBanner" title="Ẩn vĩnh viễn thông báo này">Đã hiểu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header chính -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-logo">汉</div>
+        <div>
+          <div class="brand-title">Hán Ngữ Thông Minh</div>
+          <div class="brand-subtitle">Học từ vựng tiếng Trung SRS (SM-2) &amp; AI Ngữ Cảnh</div>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <span class="badge-pill" id="headerSyncBadge" title="Trạng thái lưu và đồng bộ dữ liệu">💾 Đã lưu tự động</span>
+        <span class="badge-pill" id="headerStreakBadge">🔥 Streak: 0 ngày</span>
+        <label style="font-size:0.8rem; font-weight:600; color:var(--text-secondary); display:inline-flex; align-items:center; gap:0.3rem;">
+          Trình độ:
+          <select id="headerHskSelect" class="select" style="width:auto; padding:0.25rem 0.5rem; font-size:0.8rem;">
+            <option value="1">HSK 1</option>
+            <option value="2">HSK 2</option>
+            <option value="3">HSK 3</option>
+            <option value="4">HSK 4</option>
+            <option value="5">HSK 5</option>
+            <option value="6">HSK 6</option>
+          </select>
+        </label>
+        <button type="button" class="btn btn-sm btn-soft" id="btnToggleTheme" title="Chuyển chế độ giao diện Sáng / Tối / Tự động">
+          🌓 Giao diện
+        </button>
+      </div>
+    </div>
+
+    <!-- Thanh điều hướng Tab -->
+    <nav class="nav-tabs" role="tablist">
+      <button type="button" class="tab-btn active" data-tab="vocab">📚 Từ vựng <span class="tab-badge" id="badgeTotalWords">0</span></button>
+      <button type="button" class="tab-btn" data-tab="review">🗂️ Ôn tập <span class="tab-badge" id="badgeDueWords">0</span></button>
+      <button type="button" class="tab-btn" data-tab="quiz">🎯 Quiz</button>
+      <button type="button" class="tab-btn" data-tab="ai">✨ AI Ngữ cảnh</button>
+      <button type="button" class="tab-btn" data-tab="stats">📊 Thống kê</button>
+      <button type="button" class="tab-btn" data-tab="settings">⚙️ Cài đặt</button>
+    </nav>
+  </header>
+
+  <!-- Nội dung chính -->
+  <main class="main-container">
+
+    <!-- ======================================================================
+         TAB 1: QUẢN LÝ TỪ VỰNG
+         ====================================================================== -->
+    <section id="tab-vocab" class="tab-panel active">
+      <div class="grid-2">
+        <!-- Form thêm / sửa từ đơn -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title" id="vocabFormTitle">➕ Thêm từ mới</h2>
+            <button type="button" class="btn btn-sm btn-soft" id="btnCancelEdit" style="display:none;">Hủy sửa</button>
+          </div>
+          <form id="vocabForm">
+            <input type="hidden" id="editWordId" value="">
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label" for="inputHanzi">Chữ Hán (bắt buộc) *</label>
+                <input type="text" id="inputHanzi" class="input hanzi-text" placeholder="Ví dụ: 朋友" required style="font-size:1.15rem;">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inputPinyin">Pinyin (tự điền, có thể sửa tay)</label>
+                <input type="text" id="inputPinyin" class="input" placeholder="Ví dụ: péng you">
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label" for="inputMeaning">Nghĩa tiếng Việt *</label>
+                <input type="text" id="inputMeaning" class="input" placeholder="Ví dụ: bạn bè" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inputPos">Loại từ</label>
+                <select id="inputPos" class="select">
+                  <option value="Danh từ">Danh từ (名词)</option>
+                  <option value="Động từ">Động từ (动词)</option>
+                  <option value="Tính từ">Tính từ (形容词)</option>
+                  <option value="Đại từ">Đại từ (代词)</option>
+                  <option value="Phó từ">Phó từ (副词)</option>
+                  <option value="Lượng từ">Lượng từ (量词)</option>
+                  <option value="Cụm từ / Khác">Cụm từ / Khác</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label" for="inputTags">Thẻ / Chủ đề (cách nhau bằng dấu phẩy)</label>
+                <input type="text" id="inputTags" class="input" placeholder="Ví dụ: HSK1, giao tiếp, gia đình">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inputNote">Ghi chú / Câu ví dụ ngắn</label>
+                <input type="text" id="inputNote" class="input" placeholder="Ví dụ: 他是我的好朋友 (Anh ấy là bạn tốt của tôi)">
+              </div>
+            </div>
+
+            <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+              <button type="submit" class="btn btn-primary" id="btnSaveWord">Lưu từ vựng</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Form thêm hàng loạt -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">📥 Thêm hàng loạt nhanh</h2>
+            <span class="badge-pill">Tự động điền Pinyin</span>
+          </div>
+          <p style="font-size:0.84rem; color:var(--text-secondary); margin-bottom:0.65rem;">
+            Dán mỗi từ trên 1 dòng theo cú pháp <code>汉字 | nghĩa</code> (hoặc <code>汉字 | nghĩa | tag</code>). Ứng dụng sẽ tự động tách và điền Pinyin có dấu thanh.
+          </p>
+          <div class="form-group">
+            <textarea id="bulkTextarea" class="textarea" rows="5" placeholder="老师 | giáo viên | HSK1, trường học&#10;学生 | học sinh | HSK1&#10;中国 | Trung Quốc | HSK1"></textarea>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <input type="text" id="bulkDefaultTag" class="input" style="max-width:220px;" placeholder="Tag chung (VD: Bài 1)">
+            <button type="button" class="btn btn-accent" id="btnBulkAdd">Thêm tất cả vào sổ từ</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bộ lọc & Tìm kiếm -->
+      <div class="card">
+        <div class="grid-3" style="align-items:end;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" for="searchVocabInput">🔍 Tìm kiếm (Chữ Hán, Pinyin, Nghĩa, Ghi chú)</label>
+            <input type="text" id="searchVocabInput" class="input" placeholder="Nhập từ khóa để tìm...">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" for="filterTagSelect">🏷️ Lọc theo thẻ (Tag)</label>
+            <select id="filterTagSelect" class="select">
+              <option value="ALL">Tất cả chủ đề (Tags)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" for="filterStatusSelect">📌 Trạng thái học</label>
+            <select id="filterStatusSelect" class="select">
+              <option value="ALL">Tất cả trạng thái</option>
+              <option value="NEW">Từ mới (Chưa ôn)</option>
+              <option value="LEARNING">Đang học (Interval &lt; 21 ngày)</option>
+              <option value="MASTERED">Đã thuộc (Interval ≥ 21 ngày)</option>
+              <option value="HARD">Hay quên (Đã sai ≥ 2 lần)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Danh sách thẻ từ -->
+      <div id="vocabListContainer" class="vocab-list"></div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 2: ÔN TẬP LẶP LẠI NGẮT QUÃNG (SM-2)
+         ====================================================================== -->
+    <section id="tab-review" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">🗂️ Ôn tập hôm nay (Thuật toán SM-2)</h2>
+            <p style="font-size:0.84rem; color:var(--text-secondary);">
+              Phím tắt nhanh: nhấn <code>Space</code> để lật thẻ, nhấn phím <code>1</code> (Lại), <code>2</code> (Khó), <code>3</code> (Tốt), <code>4</code> (Dễ) để chấm.
+            </p>
+          </div>
+          <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+            <label style="font-size:0.84rem; font-weight:600; display:flex; align-items:center; gap:0.35rem;">
+              Kiểu thẻ:
+              <select id="srsModeSelect" class="select" style="width:auto;">
+                <option value="HANZI_TO_MEANING">Chữ Hán → Nghĩa</option>
+                <option value="MEANING_TO_HANZI">Nghĩa → Chữ Hán</option>
+                <option value="AUDIO_TO_MEANING">Nghe phát âm → Nghĩa</option>
+              </select>
+            </label>
+            <label style="font-size:0.84rem; font-weight:600; display:flex; align-items:center; gap:0.35rem;">
+              Giới hạn từ mới/ngày:
+              <input type="number" id="srsDailyNewLimit" class="input" min="1" max="200" style="width:76px; padding:0.35rem 0.5rem;">
+            </label>
+          </div>
+        </div>
+
+        <!-- Thanh tóm tắt số lượng thẻ -->
+        <div class="grid-3" style="margin-bottom:1.25rem;">
+          <div class="stat-box" style="padding:0.75rem;">
+            <span class="stat-label">Thẻ mới hôm nay</span>
+            <span class="stat-value" id="srsCountNew" style="font-size:1.4rem; color:var(--accent);">0</span>
+          </div>
+          <div class="stat-box" style="padding:0.75rem;">
+            <span class="stat-label">Thẻ đến hạn cần ôn</span>
+            <span class="stat-value" id="srsCountDue" style="font-size:1.4rem; color:var(--primary);">0</span>
+          </div>
+          <div class="stat-box" style="padding:0.75rem;">
+            <span class="stat-label">Đã ôn xong hôm nay</span>
+            <span class="stat-value" id="srsCountDoneToday" style="font-size:1.4rem; color:var(--success);">0</span>
+          </div>
+        </div>
+
+        <!-- Khu vực Flashcard -->
+        <div class="srs-container" id="srsCardWrapper">
+          <div class="flashcard" id="srsFlashcard" tabindex="0">
+            <div id="srsFrontContent"></div>
+            <div id="srsBackContent" style="display:none; margin-top:1.25rem; padding-top:1.25rem; border-top:1px dashed var(--border-color); width:100%;"></div>
+            <div class="flashcard-hint" id="srsFlipHint">Nhấn vào thẻ hoặc bấm phím Space để lật</div>
+          </div>
+
+          <!-- 4 nút chấm điểm SM-2 -->
+          <div class="srs-grade-grid" id="srsGradeButtons" style="display:none;">
+            <button type="button" class="grade-btn grade-again" data-grade="1">
+              <span class="grade-title" style="color:var(--danger);">1. Lại (Quên)</span>
+              <span class="grade-days" id="nextInterval1">1 ngày</span>
+            </button>
+            <button type="button" class="grade-btn grade-hard" data-grade="2">
+              <span class="grade-title" style="color:var(--warning);">2. Khó</span>
+              <span class="grade-days" id="nextInterval2">1 ngày</span>
+            </button>
+            <button type="button" class="grade-btn grade-good" data-grade="3">
+              <span class="grade-title" style="color:var(--accent);">3. Tốt</span>
+              <span class="grade-days" id="nextInterval3">3 ngày</span>
+            </button>
+            <button type="button" class="grade-btn grade-easy" data-grade="4">
+              <span class="grade-title" style="color:var(--success);">4. Dễ</span>
+              <span class="grade-days" id="nextInterval4">4 ngày</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 3: QUIZ NHIỀU DẠNG
+         ====================================================================== -->
+    <section id="tab-quiz" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">🎯 Kiểm tra &amp; Phản xạ từ vựng (Quiz)</h2>
+          <span class="badge-pill">Tự động cập nhật tiến độ SRS</span>
+        </div>
+
+        <div class="grid-3">
+          <div class="form-group">
+            <label class="form-label" for="quizTypeSelect">Dạng bài Quiz</label>
+            <select id="quizTypeSelect" class="select">
+              <option value="MC_MEANING">1. Trắc nghiệm: Chữ Hán → Chọn nghĩa đúng</option>
+              <option value="MC_HANZI">2. Trắc nghiệm: Nghĩa Việt → Chọn chữ Hán</option>
+              <option value="TYPE_PINYIN">3. Điền Pinyin (chấp nhận dấu hoặc số: ni3 hao3)</option>
+              <option value="LISTEN_MEANING">4. Nghe phát âm → Chọn nghĩa đúng</option>
+              <option value="MATCHING">5. Ghép cặp nhanh (Chữ Hán - Nghĩa)</option>
+              <option value="CLOZE">6. Điền chỗ trống trong câu ví dụ (Cloze)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="quizTagSelect">Phạm vi từ vựng</label>
+            <select id="quizTagSelect" class="select">
+              <option value="ALL">Tất cả từ vựng</option>
+              <option value="HARD_FIRST">Ưu tiên các từ hay sai / khó nhớ</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="quizCountSelect">Số lượng câu hỏi</label>
+            <select id="quizCountSelect" class="select">
+              <option value="5">5 câu</option>
+              <option value="10" selected>10 câu</option>
+              <option value="15">15 câu</option>
+              <option value="20">20 câu</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary" id="btnStartQuiz">🚀 Bắt đầu làm Quiz</button>
+      </div>
+
+      <!-- Khu vực làm bài Quiz -->
+      <div class="card" id="quizPlayArea" style="display:none;">
+        <div class="card-header">
+          <span class="badge-pill" id="quizProgressBadge">Câu 1 / 10</span>
+          <span class="badge-pill" id="quizScoreBadge">Điểm: 0</span>
+        </div>
+        <div id="quizQuestionContainer"></div>
+      </div>
+
+      <!-- Khu vực tổng kết kết quả Quiz -->
+      <div class="card" id="quizResultArea" style="display:none;"></div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 4: AI HỖ TRỢ HỌC TRONG NGỮ CẢNH (GEMINI API)
+         ====================================================================== -->
+    <section id="tab-ai" class="tab-panel">
+      <!-- Cảnh báo nếu chưa có API Key -->
+      <div class="card" id="aiNoKeyNotice" style="display:none; border-color:var(--warning); background:var(--warning-soft);">
+        <h3 style="font-size:1rem; margin-bottom:0.35rem;">🔑 Chưa cấu hình Gemini API Key</h3>
+        <p style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:0.65rem;">
+          Bạn vẫn sử dụng đầy đủ mọi tính năng học từ, SRS, Quiz, nghe phát âm và viết chữ bình thường. Để mở khóa tính năng <strong>AI tạo ví dụ theo cấp độ HSK, phân tích bộ thủ Hán-Việt và viết đoạn hội thoại</strong>, hãy nhập Gemini API Key miễn phí trong tab Cài đặt.
+        </p>
+        <button type="button" class="btn btn-sm btn-primary" id="btnGoToSettingsFromAi">Đi tới Cài đặt API Key</button>
+      </div>
+
+      <div id="aiMainWorkspace">
+        <div class="grid-2">
+          <!-- Khối 1: Tạo phân tích AI chi tiết cho 1 từ -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">✨ Phân tích sâu 1 từ với AI</h2>
+              <span class="badge-pill" id="aiCurrentHskBadge">Theo trình độ HSK 2</span>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.75rem;">
+              Sinh tự động: 3 câu ví dụ đúng cấp độ HSK của bạn, chiết tự bộ thủ + mẹo nhớ âm Hán-Việt, phân biệt từ dễ nhầm lẫn, và 1 đoạn hội thoại 4-6 câu. Kết quả lưu vĩnh viễn vào từ để dùng cho cả Quiz điền chỗ trống.
+            </p>
+            <div class="form-group">
+              <label class="form-label" for="aiSingleWordSelect">Chọn từ vựng cần AI phân tích</label>
+              <select id="aiSingleWordSelect" class="select"></select>
+            </div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button type="button" class="btn btn-primary" id="btnGenerateSingleAi">✨ Tạo bằng AI</button>
+              <button type="button" class="btn btn-outline" id="btnViewSavedAi">Xem dữ liệu AI đã lưu của từ này</button>
+            </div>
+            <div id="aiSingleResultContainer" style="margin-top:1rem;"></div>
+          </div>
+
+          <!-- Khối 2: Tạo đoạn văn / hội thoại từ nhiều từ đã chọn -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">📝 Tạo đoạn văn / hội thoại từ nhóm từ</h2>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.75rem;">
+              Đánh dấu các từ bạn đang học bên dưới, AI sẽ sáng tác một đoạn văn hoặc hội thoại ngắn tự nhiên sử dụng tất cả các từ đó, kèm Pinyin và bản dịch tiếng Việt.
+            </p>
+            <div style="display:flex; gap:0.4rem; margin-bottom:0.5rem;">
+              <button type="button" class="btn btn-sm btn-soft" id="btnSelectRandomWords">Chọn ngẫu nhiên 5 từ</button>
+              <button type="button" class="btn btn-sm btn-soft" id="btnClearSelectedWords">Bỏ chọn tất cả</button>
+            </div>
+            <div id="aiMultiWordChecklist" style="max-height:210px; overflow-y:auto; border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:0.6rem; margin-bottom:0.85rem; background:var(--bg-body);"></div>
+            <button type="button" class="btn btn-accent" id="btnGenerateMultiAi">✨ Tạo đoạn văn / hội thoại từ các từ đã chọn</button>
+            <div id="aiMultiResultContainer" style="margin-top:1rem;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 5: THỐNG KÊ HỌC TẬP
+         ====================================================================== -->
+    <section id="tab-stats" class="tab-panel">
+      <div class="grid-4" style="margin-bottom:1rem;">
+        <div class="stat-box">
+          <span class="stat-label">Tổng số từ vựng</span>
+          <span class="stat-value" id="statTotalWords">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Đã thuộc (≥ 21 ngày)</span>
+          <span class="stat-value" id="statMasteredWords" style="color:var(--success);">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Đang học</span>
+          <span class="stat-value" id="statLearningWords" style="color:var(--accent);">0</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">Từ mới chưa ôn</span>
+          <span class="stat-value" id="statNewWords" style="color:var(--warning);">0</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">📈 Số lượt ôn tập trong 14 ngày gần nhất</h2>
+            <p style="font-size:0.84rem; color:var(--text-secondary);">Tính cả lượt lật thẻ chấm điểm SM-2 và lượt trả lời câu hỏi Quiz.</p>
+          </div>
+          <span class="badge-pill" id="statStreakDetail">🔥 Chuỗi ngày học liên tiếp (Streak): 0 ngày</span>
+        </div>
+        <div class="chart-14d" id="statsChart14d"></div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         TAB 6: CÀI ĐẶT & SAO LƯU DỮ LIỆU
+         ====================================================================== -->
+    <section id="tab-settings" class="tab-panel">
+      <div class="grid-2">
+        <!-- Cấu hình học tập & Âm thanh -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">⚙️ Tùy chỉnh học tập &amp; Phát âm</h2>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="settingHskLevel">Trình độ HSK hiện tại của bạn</label>
+            <select id="settingHskLevel" class="select">
+              <option value="1">HSK 1 (Sơ cấp 1 - ~150 từ)</option>
+              <option value="2">HSK 2 (Sơ cấp 2 - ~300 từ)</option>
+              <option value="3">HSK 3 (Trung cấp 1 - ~600 từ)</option>
+              <option value="4">HSK 4 (Trung cấp 2 - ~1200 từ)</option>
+              <option value="5">HSK 5 (Cao cấp 1 - ~2500 từ)</option>
+              <option value="6">HSK 6 (Cao cấp 2 - ~5000 từ)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="settingSpeechRate">Tốc độ đọc phát âm tiếng Trung (Web Speech API): <span id="speechRateLabel">0.9x</span></label>
+            <input type="range" id="settingSpeechRate" min="0.5" max="1.3" step="0.1" value="0.9" style="width:100%;">
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted);">
+              <span>0.5x (Rất chậm)</span>
+              <span>0.9x (Vừa phải)</span>
+              <span>1.3x (Nhanh)</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="settingNewCardsPerDay">Giới hạn thẻ mới tối đa mỗi ngày</label>
+            <input type="number" id="settingNewCardsPerDay" class="input" min="1" max="200" value="15">
+          </div>
+
+          <button type="button" class="btn btn-outline" id="btnTestSpeech">🔊 Nghe thử phát âm (你好，欢迎学习中文)</button>
+        </div>
+
+        <!-- Cấu hình Gemini API Key -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">🤖 Cấu hình Gemini AI</h2>
+            <span class="badge-pill">Lưu cục bộ an toàn</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="settingGeminiKey">Gemini API Key (chỉ lưu trong localStorage máy bạn)</label>
+            <input type="password" id="settingGeminiKey" class="input" placeholder="AIzaSy...">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="settingGeminiModel">Tên Model Gemini</label>
+            <select id="settingGeminiModel" class="select">
+              <option value="gemini-2.5-flash">gemini-2.5-flash (Khuyên dùng - Nhanh &amp; Miễn phí)</option>
+              <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+              <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+              <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+            </select>
+          </div>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.85rem;">
+            <button type="button" class="btn btn-primary" id="btnSaveApiSettings">Lưu cài đặt AI</button>
+            <button type="button" class="btn btn-danger" id="btnClearApiKey">Xóa API Key</button>
+          </div>
+          <div class="ai-box">
+            <h4>Hướng dẫn lấy Gemini API Key miễn phí</h4>
+            <ol style="padding-left:1.1rem; font-size:0.82rem; color:var(--text-secondary);">
+              <li>Truy cập <strong>Google AI Studio</strong> tại địa chỉ: <code>https://aistudio.google.com/app/apikey</code></li>
+              <li>Đăng nhập bằng tài khoản Google cá nhân của bạn.</li>
+              <li>Bấm nút <strong>"Create API key"</strong>, sao chép mã bắt đầu bằng <code>AIza...</code> và dán vào ô trên.</li>
+              <li>Khóa của bạn được lưu trực tiếp trong trình duyệt này và chỉ gửi trực tiếp tới máy chủ <code>generativelanguage.googleapis.com</code> của Google khi bạn bấm nút tạo AI.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Đồng bộ hóa tự động (GitHub Gist Cloud & File ổ cứng trực tiếp) -->
+      <div class="card" id="autoSyncCard">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">☁️ Đồng bộ tự động (Không cần xuất/nhập JSON thủ công)</h2>
+            <p style="font-size:0.84rem; color:var(--text-secondary);">
+              Bình thường trên cùng 1 trình duyệt, dữ liệu đã tự lưu 100%. Nếu bạn muốn tự động đồng bộ qua đám mây (giữa máy tính &amp; điện thoại) hoặc tự ghi đè trực tiếp vào 1 file trên máy tính, hãy chọn 1 trong 2 cách dưới đây:
+            </p>
+          </div>
+          <span class="badge-pill" id="syncStatusDetailBadge">Trạng thái: Lưu cục bộ trình duyệt</span>
+        </div>
+
+        <div class="grid-2">
+          <!-- Cách 1: Đồng bộ đám mây tự động qua GitHub Gist -->
+          <div style="border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:1rem; background:var(--bg-body);">
+            <h3 style="font-size:0.96rem; font-weight:700; margin-bottom:0.35rem;">Cách 1: Đồng bộ Đám mây tự động (GitHub Gist - Miễn phí)</h3>
+            <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:0.75rem;">
+              Tự động tải dữ liệu mới nhất khi mở app và tự động đẩy lên mây mỗi khi bạn thêm từ, ôn tập hay sửa cài đặt (kể cả API Key). Dùng chung được trên cả Điện thoại và Máy tính.
+            </p>
+            <div class="form-group">
+              <label class="form-label" for="settingGithubToken">GitHub Personal Access Token (chỉ cần quyền <code>gist</code>)</label>
+              <input type="password" id="settingGithubToken" class="input" placeholder="ghp_... hoặc github_pat_...">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="settingGistId">Gist ID (Để trống lần đầu, ứng dụng sẽ tự tạo mới cho bạn)</label>
+              <input type="text" id="settingGistId" class="input" placeholder="Tự động điền sau khi bấm Kết nối...">
+            </div>
+            <label style="display:flex; align-items:center; gap:0.45rem; font-size:0.84rem; font-weight:600; margin-bottom:0.75rem; cursor:pointer;">
+              <input type="checkbox" id="settingAutoCloudSync" checked>
+              Tự động đồng bộ ngầm mỗi khi thay đổi dữ liệu &amp; khi mở ứng dụng
+            </label>
+            <div style="display:flex; gap:0.45rem; flex-wrap:wrap;">
+              <button type="button" class="btn btn-sm btn-primary" id="btnConnectCloudSync">🔗 Lưu &amp; Đồng bộ lên mây ngay</button>
+              <button type="button" class="btn btn-sm btn-outline" id="btnPullCloudSync">⬇️ Tải dữ liệu từ mây về</button>
+            </div>
+            <div class="ai-box" style="margin-top:0.75rem;">
+              <h4>Cách lấy mã GitHub Token miễn phí trong 30 giây</h4>
+              <ol style="padding-left:1.1rem; font-size:0.8rem; color:var(--text-secondary);">
+                <li>Đăng nhập GitHub, vào <code>https://github.com/settings/tokens/new</code></li>
+                <li>Ô Note điền <code>HocTiengTrung</code>, mục Expiration chọn <strong>No expiration</strong>.</li>
+                <li>Tick chọn duy nhất ô <strong><code>gist</code></strong> (Create gists) rồi bấm <strong>Generate token</strong> ở cuối trang.</li>
+                <li>Copy mã <code>ghp_...</code> dán vào ô trên và bấm <strong>Lưu &amp; Đồng bộ lên mây ngay</strong>. На thiết bị thứ 2, chỉ cần nhập cùng Token và Gist ID này là 2 máy tự đồng bộ!</li>
+              </ol>
+            </div>
+          </div>
+
+          <!-- Cách 2: Liên kết trực tiếp 1 file JSON trên ổ cứng máy tính -->
+          <div style="border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:1rem; background:var(--bg-body); display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <h3 style="font-size:0.96rem; font-weight:700; margin-bottom:0.35rem;">Cách 2: Tự động ghi thẳng vào 1 file trên máy tính (Google Drive / OneDrive / Ổ cứng)</h3>
+              <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:0.75rem;">
+                Dành cho Chrome / Edge trên máy tính: Bạn chỉ cần chọn 1 file <code>.json</code> trên máy (hoặc trong thư mục Google Drive / iCloud / OneDrive). Từ đó về sau, mỗi khi bạn học hay thêm từ, ứng dụng <strong>tự động ghi đè trực tiếp</strong> vào file đó mà không bao giờ hỏi tải xuống nữa.
+              </p>
+              <div class="ai-box" style="margin-bottom:0.85rem;">
+                <h4>Trạng thái file liên kết trực tiếp</h4>
+                <p id="localFileSyncStatusText" style="font-weight:600; color:var(--text-secondary);">Chưa liên kết file trực tiếp trong phiên này.</p>
+              </div>
+            </div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button type="button" class="btn btn-sm btn-accent" id="btnLinkLocalFile">📂 Chọn / Tạo file JSON tự động lưu</button>
+              <button type="button" class="btn btn-sm btn-outline" id="btnUnlinkLocalFile" style="display:none;">Ngắt liên kết file</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sao lưu & Khôi phục dữ liệu -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">💾 Sao lưu &amp; Khôi phục dữ liệu (JSON thủ công)</h2>
+        </div>
+        <p style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:1rem;">
+          Vì ứng dụng chạy hoàn toàn trên trình duyệt không qua máy chủ, việc xóa lịch sử hoặc dữ liệu duyệt web (Clear Site Data) sẽ làm mất dữ liệu trong <code>localStorage</code>. Hãy xuất file JSON định kỳ để lưu trữ an toàn trên máy tính hoặc đám mây.
+        </p>
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+          <button type="button" class="btn btn-primary" id="btnExportJson">📤 Xuất dữ liệu (.json)</button>
+          <label class="btn btn-accent" style="cursor:pointer;">
+            📥 Nhập dữ liệu từ file JSON
+            <input type="file" id="inputImportJson" accept=".json,application/json" style="display:none;">
+          </label>
+          <button type="button" class="btn btn-outline" id="btnResetSampleData">🔄 Khôi phục bộ từ mẫu HSK 1 ban đầu</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================================
+       MODAL XEM THỨ TỰ NÉT VIẾT (HANZI WRITER) & CHI TIẾT AI CỦA TỪ
+       ======================================================================== -->
+  <div class="modal-backdrop" id="wordDetailModal">
+    <div class="modal-content">
+      <div class="card-header">
+        <h3 class="card-title" id="modalWordTitle">Chi tiết từ vựng &amp; Nét viết</h3>
+        <button type="button" class="btn btn-sm btn-soft" id="btnCloseModal">✕ Đóng</button>
+      </div>
+      <div id="modalWordBody"></div>
+    </div>
+  </div>
+
+  <!-- Khu vực hiển thị Toast thông báo -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ========================================================================
+       JAVASCRIPT THUẦN: LOGIC ỨNG DỤNG, SM-2, QUIZ, HANZI-WRITER & GEMINI AI
+       ======================================================================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* ======================================================================
+         1. KHÓA LƯU TRỮ LOCALSTORAGE & DỮ LIỆU MẪU HSK 1 BAN ĐẦU
+         ====================================================================== */
+      const STORAGE_KEY = 'HANZI_SRS_APP_DATA_V1';
+
+      // Hàm lấy ngày định dạng YYYY-MM-DD theo giờ địa phương
+      function getTodayStr(offsetDays = 0) {
+        const d = new Date();
+        if (offsetDays !== 0) {
+          d.setDate(d.getDate() + offsetDays);
+        }
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      // 8 từ mẫu HSK 1 kèm câu ví dụ sẵn để người dùng thử ngay mọi tính năng (kể cả Quiz Cloze)
+      function getInitialSampleWords() {
+        const today = getTodayStr(0);
+        return [
+          {
+            id: 'w_sample_1',
+            hanzi: '你好',
+            pinyin: 'nǐ hǎo',
+            meaning: 'xin chào',
+            pos: 'Cụm từ / Khác',
+            tags: ['HSK1', 'giao tiếp'],
+            note: '你好，我是越南人。(Xin chào, tôi là người Việt Nam.)',
+            srs: { ef: 2.5, interval: 0, reps: 0, dueDate: today, correctCount: 0, wrongCount: 0, lastReviewed: null },
+            aiData: {
+              examples: [
+                { zh: '你好，很高兴认识你。', pinyin: 'Nǐ hǎo, hěn gāoxìng rènshi nǐ.', vi: 'Xin chào, rất vui được làm quen với bạn.' },
+                { zh: '老师你好！', pinyin: 'Lǎoshī nǐ hǎo!', vi: 'Em chào thầy/cô ạ!' }
+              ],
+              etymology: 'Ghép từ 你 (nǐ - bạn, âm Hán-Việt: Nễ) và 好 (hǎo - tốt, âm Hán-Việt: Hảo). Chúc đối phương tốt lành khi gặp mặt.',
+              confusable: '您好 (nín hǎo) dùng khi chào người lớn tuổi, cấp trên một cách kính trọng hơn 你好.',
+              dialogue: [
+                { speaker: 'A', zh: '你好！你叫什么名字？', pinyin: 'Nǐ hǎo! Nǐ jiào shénme míngzi?', vi: 'Xin chào! Bạn tên là gì?' },
+                { speaker: 'B', zh: '你好，我叫明英。', pinyin: 'Nǐ hǎo, wǒ jiào Míngyīng.', vi: 'Xin chào, mình tên là Minh Anh.' }
+              ]
+            }
+          },
+          {
+            id: 'w_sample_2',
+            hanzi: '谢谢',
+            pinyin: 'xiè xie',
+            meaning: 'cảm ơn',
+            pos: 'Động từ',
+            tags: ['HSK1', 'giao tiếp'],
+            note: '非常感谢你的帮助 / 谢谢你。(Cảm ơn bạn rất nhiều.)',
+            srs: { ef: 2.5, interval: 0, reps: 0, dueDate: today, correctCount: 0, wrongCount: 0, lastReviewed: null },
+            aiData: {
+              examples: [
+                { zh: '谢谢你的帮助。', pinyin: 'Xièxie nǐ de bāngzhù.', vi: 'Cảm ơn sự giúp đỡ của bạn.' }
+              ],
+              etymology: 'Bộ Ngôn (讠- lời nói) ghép với 射 (bắn ra). Âm Hán-Việt: Tạ (trong đa tạ, cảm tạ).',
+              confusable: '感谢 (gǎnxiè) mang sắc thái trang trọng hơn 谢谢.',
+              dialogue: []
+            }
+          },
+          {
+            id: 'w_sample_3',
+            hanzi: '学习',
+            pinyin: 'xué xí',
+            meaning: 'học, học tập',
+            pos: 'Động từ',
+            tags: ['HSK1', 'trường học'],
+            note: '我喜欢学习汉语。(Tôi thích học tiếng Hán.)',
+            srs: { ef: 2.5, interval: 0, reps: 0, dueDate: today, correctCount: 0, wrongCount: 0, lastReviewed: null },
+            aiData: {
+              examples: [
+                { zh: '他在北京学习汉语。', pinyin: 'Tā zài Běijīng xuéxí Hànyǔ.', vi: 'Anh ấy học tiếng Trung ở Bắc Kinh.' }
+              ],
+              etymology: 'Âm Hán-Việt: Học tập. 学 (Học) có bộ Tử (子 - đứa trẻ dưới mái nhà), 习 (Tập) là chim non tập bay.',
+              confusable: '学习 vừa là học nói chung, còn 学会 là học được thành thạo một kỹ năng.',
+              dialogue: []
+            }
+          },
+          {
+            id: 'w_sample_4',
+            hanzi: '朋友',
+            pinyin: 'péng you',
+            meaning: 'bạn bè, người bạn',
+            pos: 'Danh từ',
+            tags: ['HSK1', 'con người'],
+            note: '他是我的好朋友。(Anh ấy là bạn tốt của tôi.)',
+            srs: { ef: 2.5, interval: 0, reps: 0, dueDate: today, correctCount: 0, wrongCount: 0, lastReviewed: null },
+            aiData: {
+              examples: [
+                { zh: '我有一个中国朋友。', pinyin: 'Wǒ yǒu yí gè Zhōngguó péngyou.', vi: 'Tôi có một người bạn Trung Quốc.' }
+              ],
+              etymology: 'Âm Hán-Việt: Bằng hữu. 朋 gồm hai chữ Nguyệt (月) sóng đôi như hai người bạn đồng hành.',
+              confusable: '朋友 là bạn nói chung; 老朋友 là bạn cũ lâu năm.',
+              dialogue: []
+            }
+          },
+          {
+            id: 'w_sample_5',
+            hanzi: '喜欢',
+            pinyin: 'xǐ huan',
+            meaning: 'thích, yêu thích',
+            pos: 'Động từ',
+            tags: ['HSK1', 'cảm xúc'],
+            note: '你喜欢喝茶吗？(Bạn có thích uống trà không?)',
+            srs: { ef: 2.5, interval: 0, reps: 0, dueDate: today, correctCount: 0, wrongCount: 0, lastReviewed: null },
+            aiData: {
+              examples: [
+                { zh: '我非常喜欢吃中国菜。', pinyin: 'Wǒ fēicháng xǐhuan chī Zhōngguó cài.', vi: 'Tôi rất thích ăn món Trung Quốc.' }
+              ],
+              etymology: 'Âm Hán-Việt: Hỷ hoan (niềm vui vẻ, hân hoan).',
+              confusable: '喜欢 (thích) nhẹ nhàng hơn 爱 (yêu).',
+              dialogue: []
+            }
+          },
+          {
+            id: 'w_sample_6',
+            hanzi: '喝水',
+            pinyin: 'hē shuǐ',
+            meaning: 'uống nước',
+            pos: 'Động từ',
+            tags: ['HSK1', 'đời sống'],
+            note: '天气很热，多喝水吧。(Trời nóng lắm, uống nhiều nước nhé.)',
+            srs: { ef: 2.5, interval: 0, reps: 0, dueDate: today, correctCount: 0, wrongCount: 0, lastReviewed: null },
+            aiData: {
+              examples: [
+                { zh: '请给我一杯水，我想喝水。', pinyin: 'Qǐng gěi wǒ yì bēi shuǐ, wǒ xiǎng hē shuǐ.', vi: 'Làm ơn cho tôi một cốc nước, tôi muốn uống nước.' }
+              ],
+              etymology: '喝 (Hát - uống, có bộ Khẩu 口) + 水 (Thủy - nước).',
+              confusable: '喝 dùng cho chất lỏng (nước, trà, bia, canh).',
+              dialogue: []
+            }
+          },
+          {
+            id: 'w_sample_7',
+            hanzi: '医院',
+            pinyin: 'yī yuàn',
+            meaning: 'bệnh viện',
+            pos: 'Danh từ',
+            tags: ['HSK1', 'địa điểm'],
+            note: '我妈妈在医院工作。(Mẹ tôi làm việc ở bệnh viện.)',
+            srs: { ef: 2.5, interval: 0, reps: 0, dueDate: today, correctCount: 0, wrongCount: 0, lastReviewed: null },
+            aiData: {
+              examples: [
+                { zh: '他在医院看病。', pinyin: 'Tā zài yīyuàn kànbìng.', vi: 'Anh ấy đang khám bệnh ở bệnh viện.' }
+              ],
+              etymology: 'Âm Hán-Việt: Y viện (y = y tế, viện = cơ sở lớn).',
+              confusable: '医院 là bệnh viện; 医生 (yīshēng) là bác sĩ.',
+              dialogue: []
+            }
+          },
+          {
+            id: 'w_sample_8',
+            hanzi: '漂亮',
+            pinyin: 'piào liang',
+            meaning: 'đẹp, xinh đẹp',
+            pos: 'Tính từ',
+            tags: ['HSK1', 'miêu tả'],
+            note: '这件衣服很漂亮。(Bộ quần áo này rất đẹp.)',
+            srs: { ef: 2.5, interval: 0, reps: 0, dueDate: today, correctCount: 0, wrongCount: 0, lastReviewed: null },
+            aiData: {
+              examples: [
+                { zh: '你的新衣服真漂亮！', pinyin: 'Nǐ de xīn yīfu zhēn piàoliang!', vi: 'Quần áo mới của bạn đẹp thật đấy!' }
+              ],
+              etymology: 'Âm Hán-Việt: Phiêu lượng. 漂 có bộ Thủy (氵), 亮 nghĩa là sáng sủa.',
+              confusable: '漂亮 thường khen phụ nữ, quần áo, cảnh vật; khen nam giới lịch lãm thường dùng 帅 (shuài).',
+              dialogue: []
+            }
+          }
+        ];
+      }
+
+      // Trạng thái toàn cục của ứng dụng
+      let appState = {
+        words: [],
+        settings: {
+          hskLevel: '2',
+          speechRate: 0.9,
+          newCardsPerDay: 15,
+          srsMode: 'HANZI_TO_MEANING',
+          geminiApiKey: '',
+          geminiModel: 'gemini-2.5-flash',
+          theme: 'system',
+          hideBackupBanner: false,
+          githubToken: '',
+          gistId: '',
+          autoCloudSync: true
+        },
+        lastModified: Date.now(),
+        stats: {
+          dailyReviews: {}, // { 'YYYY-MM-DD': count }
+          newStudiedToday: { date: getTodayStr(0), count: 0 }
+        }
+      };
+
+      let linkedFileHandle = null;
+      let cloudSyncTimer = null;
+      let isCloudSyncing = false;
+
+      function updateSyncIndicator(text, tone = 'default') {
+        const headerBadge = document.getElementById('headerSyncBadge');
+        const detailBadge = document.getElementById('syncStatusDetailBadge');
+        if (headerBadge) {
+          headerBadge.textContent = text;
+          if (tone === 'success') {
+            headerBadge.style.background = 'var(--success-soft)';
+            headerBadge.style.color = 'var(--success)';
+          } else if (tone === 'warning') {
+            headerBadge.style.background = 'var(--warning-soft)';
+            headerBadge.style.color = 'var(--warning)';
+          } else {
+            headerBadge.style.background = 'var(--bg-subtle)';
+            headerBadge.style.color = 'var(--text-secondary)';
+          }
+        }
+        if (detailBadge) {
+          detailBadge.textContent = text;
+        }
+      }
+
+      // Đọc dữ liệu từ localStorage an toàn với try/catch
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && Array.isArray(parsed.words)) {
+              appState.words = parsed.words;
+              appState.settings = Object.assign({}, appState.settings, parsed.settings || {});
+              appState.stats = Object.assign({}, appState.stats, parsed.stats || {});
+              appState.lastModified = parsed.lastModified || Date.now();
+              if (!appState.stats.dailyReviews) appState.stats.dailyReviews = {};
+              if (!appState.stats.newStudiedToday || appState.stats.newStudiedToday.date !== getTodayStr(0)) {
+                appState.stats.newStudiedToday = { date: getTodayStr(0), count: 0 };
+              }
+              return;
+            }
+          }
+        } catch (err) {
+          console.warn('Không thể đọc localStorage:', err);
+        }
+        // Nếu mở lần đầu hoặc chưa có dữ liệu -> khởi tạo 8 từ mẫu HSK1
+        appState.words = getInitialSampleWords();
+        saveState({ skipCloud: true });
+      }
+
+      // Tự động ghi đè vào file JSON đã liên kết trên ổ cứng (File System Access API)
+      async function writeToLinkedLocalFile() {
+        if (!linkedFileHandle) return;
+        try {
+          const writable = await linkedFileHandle.createWritable();
+          await writable.write(JSON.stringify(appState, null, 2));
+          await writable.close();
+          updateSyncIndicator('💾 Đã tự lưu vào File & Trình duyệt', 'success');
+        } catch (err) {
+          console.warn('Lỗi ghi file tự động:', err);
+          updateSyncIndicator('⚠️ Không thể ghi file liên kết', 'warning');
+        }
+      }
+
+      // Đẩy dữ liệu lên GitHub Gist tự động (hoặc tạo Gist bí mật mới nếu chưa có Gist ID)
+      async function pushToGithubGist(silent = false) {
+        const token = (appState.settings.githubToken || '').trim();
+        if (!token || isCloudSyncing) return;
+
+        isCloudSyncing = true;
+        updateSyncIndicator('☁️ Đang đồng bộ lên mây...', 'default');
+
+        const gistId = (appState.settings.gistId || '').trim();
+        const url = gistId
+          ? `https://api.github.com/gists/${encodeURIComponent(gistId)}`
+          : 'https://api.github.com/gists';
+        const method = gistId ? 'PATCH' : 'POST';
+
+        // Tạo bản sao dữ liệu để lưu lên Gist (không đính kèm githubToken bên trong file Gist vì lý do bảo mật)
+        const payloadState = JSON.parse(JSON.stringify(appState));
+        if (payloadState.settings) {
+          delete payloadState.settings.githubToken;
+        }
+
+        try {
+          const res = await fetch(url, {
+            method,
+            headers: {
+              'Accept': 'application/vnd.github+json',
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              description: 'Dữ liệu đồng bộ tự động ứng dụng Hán Ngữ Thông Minh (SRS)',
+              public: false,
+              files: {
+                'hanzi_srs_sync.json': {
+                  content: JSON.stringify(payloadState, null, 2)
+                }
+              }
+            })
+          });
+
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          const data = await res.json();
+          if (data && data.id && data.id !== appState.settings.gistId) {
+            appState.settings.gistId = data.id;
+            const gistInput = document.getElementById('settingGistId');
+            if (gistInput) gistInput.value = data.id;
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {}
+          }
+          const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+          updateSyncIndicator(`☁️ Đã đồng bộ mây (${timeStr})`, 'success');
+          if (!silent) {
+            showToast(`Đã đồng bộ tự động lên GitHub Gist (ID: ${appState.settings.gistId})!`);
+          }
+        } catch (err) {
+          updateSyncIndicator('⚠️ Lỗi đồng bộ mây (Kiểm tra Token/Gist ID)', 'warning');
+          if (!silent) {
+            showToast('Không thể đồng bộ GitHub Gist. Hãy kiểm tra lại GitHub Token (quyền gist) và Gist ID.');
+          }
+        } finally {
+          isCloudSyncing = false;
+        }
+      }
+
+      // Tải dữ liệu từ GitHub Gist về máy khi mở ứng dụng hoặc khi bấm nút
+      async function pullFromGithubGist(silent = false) {
+        const token = (appState.settings.githubToken || '').trim();
+        const gistId = (appState.settings.gistId || '').trim();
+        if (!token || !gistId || isCloudSyncing) return;
+
+        isCloudSyncing = true;
+        updateSyncIndicator('☁️ Đang kiểm tra dữ liệu mây...', 'default');
+
+        try {
+          const res = await fetch(`https://api.github.com/gists/${encodeURIComponent(gistId)}`, {
+            headers: {
+              'Accept': 'application/vnd.github+json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          const fileObj = data?.files?.['hanzi_srs_sync.json'] || Object.values(data?.files || {})[0];
+          if (!fileObj || !fileObj.content) {
+            throw new Error('Không tìm thấy nội dung JSON trong Gist.');
+          }
+          const remoteState = JSON.parse(fileObj.content);
+          if (remoteState && Array.isArray(remoteState.words)) {
+            const currentToken = appState.settings.githubToken;
+            const currentGistId = appState.settings.gistId;
+            const currentGeminiKey = appState.settings.geminiApiKey;
+
+            appState.words = remoteState.words;
+            appState.stats = Object.assign({}, appState.stats, remoteState.stats || {});
+            appState.settings = Object.assign({}, appState.settings, remoteState.settings || {});
+            // Giữ nguyên Token và API Key nếu bản trên mây chưa có
+            appState.settings.githubToken = currentToken;
+            appState.settings.gistId = currentGistId;
+            if (!appState.settings.geminiApiKey && currentGeminiKey) {
+              appState.settings.geminiApiKey = currentGeminiKey;
+            }
+            appState.lastModified = remoteState.lastModified || Date.now();
+
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {}
+
+            syncSettingsToInputs();
+            renderVocabList();
+            renderCurrentSrsCard();
+            updateAiTabVisibility();
+            renderStats();
+
+            const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            updateSyncIndicator(`☁️ Đã đồng bộ mây (${timeStr})`, 'success');
+            if (!silent) {
+              showToast(`Đã tải ${appState.words.length} từ vựng mới nhất từ đám mây!`);
+            }
+          }
+        } catch (err) {
+          updateSyncIndicator('⚠️ Không tải được Gist', 'warning');
+          if (!silent) {
+            showToast('Không thể tải dữ liệu từ Gist: ' + err.message);
+          }
+        } finally {
+          isCloudSyncing = false;
+        }
+      }
+
+      // Lưu dữ liệu vào localStorage bọc try/catch + kích hoạt tự động ghi file & đẩy lên mây
+      function saveState(options = {}) {
+        appState.lastModified = Date.now();
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+          if (!linkedFileHandle && !(appState.settings.githubToken && appState.settings.autoCloudSync)) {
+            const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            updateSyncIndicator(`💾 Đã lưu tự động (${timeStr})`, 'default');
+          }
+        } catch (err) {
+          showToast('Không thể lưu vào localStorage (Bộ nhớ đầy hoặc bị chặn). Hãy xuất file JSON!', 'danger');
+        }
+
+        // Nếu người dùng đã liên kết file JSON trên ổ cứng -> tự động ghi đè ngay
+        if (linkedFileHandle) {
+          writeToLinkedLocalFile();
+        }
+
+        // Nếu người dùng bật tự động đồng bộ đám mây GitHub Gist -> debounce 1.5 giây rồi đẩy lên mây
+        if (!options.skipCloud && appState.settings.autoCloudSync && (appState.settings.githubToken || '').trim()) {
+          if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+          cloudSyncTimer = setTimeout(() => {
+            pushToGithubGist(true);
+          }, 1500);
+        }
+      }
+
+      /* ======================================================================
+         2. TIỆN ÍCH GIAO DIỆN, TOAST, PINYIN-PRO & PHÁT ÂM WEB SPEECH API
+         ====================================================================== */
+      function showToast(message) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => {
+          toast.remove();
+        }, 3200);
+      }
+
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      // Tự động chuyển chữ Hán sang Pinyin có dấu thanh bằng thư viện pinyin-pro
+      function convertHanziToPinyin(hanziStr) {
+        const clean = (hanziStr || '').trim();
+        if (!clean) return '';
+        try {
+          if (window.pinyinPro && typeof window.pinyinPro.pinyin === 'function') {
+            return window.pinyinPro.pinyin(clean, { toneType: 'symbol' });
+          }
+        } catch (e) {
+          console.warn('Lỗi pinyin-pro:', e);
+        }
+        return '';
+      }
+
+      // Phát âm tiếng Trung bằng Web Speech API (zh-CN)
+      function speakChinese(text) {
+        if (!text) return;
+        if (!('speechSynthesis' in window)) {
+          showToast('Trình duyệt của bạn không hỗ trợ Web Speech API.');
+          return;
+        }
+        try {
+          window.speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance(text);
+          utter.lang = 'zh-CN';
+          utter.rate = parseFloat(appState.settings.speechRate) || 0.9;
+          const voices = window.speechSynthesis.getVoices();
+          const zhVoice = voices.find(v => v.lang && (v.lang.includes('zh-CN') || v.lang.includes('zh_CN') || v.lang.startsWith('zh')));
+          if (zhVoice) utter.voice = zhVoice;
+          window.speechSynthesis.speak(utter);
+        } catch (e) {
+          showToast('Không thể phát âm trên thiết bị này.');
+        }
+      }
+
+      // Áp dụng chế độ Sáng / Tối
+      function applyTheme(themeMode) {
+        appState.settings.theme = themeMode;
+        document.documentElement.setAttribute('data-theme', themeMode);
+        const btn = document.getElementById('btnToggleTheme');
+        const labels = { system: '🌓 Hệ thống', light: '☀️ Sáng', dark: '🌙 Tối' };
+        btn.textContent = labels[themeMode] || '🌓 Giao diện';
+      }
+
+      /* ======================================================================
+         3. QUẢN LÝ TỪ VỰNG (THÊM, SỬA, XÓA, THÊM HÀNG LOẠT, LỌC TAG)
+         ====================================================================== */
+      function populateTagSelectors() {
+        const tagSet = new Set();
+        appState.words.forEach(w => {
+          (w.tags || []).forEach(t => {
+            if (t.trim()) tagSet.add(t.trim());
+          });
+        });
+        const sortedTags = Array.from(tagSet).sort();
+
+        // Cập nhật select lọc ở Tab Từ vựng
+        const filterTagSelect = document.getElementById('filterTagSelect');
+        const currentFilter = filterTagSelect.value;
+        filterTagSelect.innerHTML = '<option value="ALL">Tất cả chủ đề (Tags)</option>' +
+          sortedTags.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+        if (sortedTags.includes(currentFilter)) filterTagSelect.value = currentFilter;
+
+        // Cập nhật select ở Tab Quiz
+        const quizTagSelect = document.getElementById('quizTagSelect');
+        const currentQuizTag = quizTagSelect.value;
+        quizTagSelect.innerHTML =
+          '<option value="ALL">Tất cả từ vựng</option>' +
+          '<option value="HARD_FIRST">Ưu tiên các từ tôi hay sai</option>' +
+          sortedTags.map(t => `<option value="TAG:${escapeHtml(t)}">Chủ đề: ${escapeHtml(t)}</option>`).join('');
+        if ([...quizTagSelect.options].some(o => o.value === currentQuizTag)) {
+          quizTagSelect.value = currentQuizTag;
+        }
+      }
+
+      function renderVocabList() {
+        populateTagSelectors();
+        const searchVal = (document.getElementById('searchVocabInput').value || '').trim().toLowerCase();
+        const tagFilter = document.getElementById('filterTagSelect').value;
+        const statusFilter = document.getElementById('filterStatusSelect').value;
+
+        const filtered = appState.words.filter(w => {
+          if (tagFilter !== 'ALL' && !(w.tags || []).includes(tagFilter)) return false;
+          if (statusFilter === 'NEW' && w.srs.reps > 0) return false;
+          if (statusFilter === 'LEARNING' && (w.srs.reps === 0 || w.srs.interval >= 21)) return false;
+          if (statusFilter === 'MASTERED' && w.srs.interval < 21) return false;
+          if (statusFilter === 'HARD' && (w.srs.wrongCount || 0) < 2) return false;
+
+          if (searchVal) {
+            const hay = `${w.hanzi} ${w.pinyin} ${w.meaning} ${w.note || ''} ${(w.tags || []).join(' ')}`.toLowerCase();
+            if (!hay.includes(searchVal)) return false;
+          }
+          return true;
+        });
+
+        const container = document.getElementById('vocabListContainer');
+        document.getElementById('badgeTotalWords').textContent = appState.words.length;
+
+        if (filtered.length === 0) {
+          container.innerHTML = `
+            <div class="card" style="grid-column: 1 / -1; text-align:center; padding:2rem;">
+              <p style="color:var(--text-secondary);">Không tìm thấy từ vựng nào khớp với bộ lọc hiện tại.</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = filtered.map(w => {
+          const srsStatus = w.srs.reps === 0
+            ? 'Từ mới'
+            : (w.srs.interval >= 21 ? `Đã thuộc (${w.srs.interval}n)` : `Đang học (${w.srs.interval}n)`);
+          const tagsHtml = (w.tags || []).map(t => `<span class="tag">#${escapeHtml(t)}</span>`).join('');
+          const hasAi = w.aiData && w.aiData.examples && w.aiData.examples.length > 0;
+
+          return `
+            <div class="vocab-item" data-word-id="${escapeHtml(w.id)}">
+              <div>
+                <div class="vocab-top">
+                  <div>
+                    <div class="hanzi-lg">${escapeHtml(w.hanzi)}</div>
+                    <div class="vocab-pinyin">${escapeHtml(w.pinyin)}</div>
+                  </div>
+                  <div style="display:flex; gap:0.35rem;">
+                    <button type="button" class="btn btn-sm btn-soft" data-action="speak" data-id="${escapeHtml(w.id)}" title="Nghe phát âm">🔊</button>
+                    <button type="button" class="btn btn-sm btn-soft" data-action="stroke" data-id="${escapeHtml(w.id)}" title="Xem thứ tự nét viết & Chi tiết">✍️ Nét viết</button>
+                  </div>
+                </div>
+                <div class="vocab-meaning">${escapeHtml(w.meaning)}</div>
+                ${w.note ? `<div class="vocab-meta">📝 ${escapeHtml(w.note)}</div>` : ''}
+                <div class="tag-list">
+                  <span class="tag tag-pos">${escapeHtml(w.pos || 'Từ vựng')}</span>
+                  <span class="tag tag-srs">${escapeHtml(srsStatus)} · Đúng ${w.srs.correctCount || 0} / Sai ${w.srs.wrongCount || 0}</span>
+                  ${hasAi ? '<span class="tag" style="background:var(--primary-soft);color:var(--primary);">✨ Đã có AI</span>' : ''}
+                  ${tagsHtml}
+                </div>
+              </div>
+              <div class="vocab-actions">
+                <button type="button" class="btn btn-sm btn-outline" data-action="ai-quick" data-id="${escapeHtml(w.id)}">✨ Tạo AI</button>
+                <button type="button" class="btn btn-sm btn-outline" data-action="edit" data-id="${escapeHtml(w.id)}">✏️ Sửa</button>
+                <button type="button" class="btn btn-sm btn-danger" data-action="delete" data-id="${escapeHtml(w.id)}">🗑️ Xóa</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      /* ======================================================================
+         4. THUẬT TOÁN LẶP LẠI NGẮT QUÃNG SM-2 (ANKI)
+         ====================================================================== */
+      // Tính toán kết quả SM-2 giả định để hiển thị số ngày dự kiến trên 4 nút (Lại / Khó / Tốt / Dễ)
+      function previewSm2Interval(srs, grade) {
+        // grade: 1 (Lại), 2 (Khó), 3 (Tốt), 4 (Dễ)
+        let reps = srs.reps || 0;
+        let interval = srs.interval || 0;
+        let ef = srs.ef || 2.5;
+
+        if (grade === 1) {
+          return 1; // Quên -> ôn lại vào ngày mai (1 ngày)
+        }
+        if (grade === 2) {
+          return Math.max(1, interval === 0 ? 1 : Math.round(interval * 1.2));
+        }
+        if (grade === 3) {
+          if (reps === 0) return 1;
+          if (reps === 1) return 3;
+          return Math.max(2, Math.round(interval * ef));
+        }
+        if (grade === 4) {
+          if (reps === 0) return 4;
+          if (reps === 1) return 6;
+          return Math.max(4, Math.round(interval * ef * 1.3));
+        }
+        return 1;
+      }
+
+      // Cập nhật thực tế dữ liệu SM-2 của từ sau khi chấm điểm hoặc làm Quiz
+      function applySm2Review(word, grade) {
+        const srs = word.srs;
+        const isFirstStudy = srs.reps === 0 && !srs.lastReviewed;
+
+        const nextDays = previewSm2Interval(srs, grade);
+
+        if (grade === 1) {
+          srs.reps = 0;
+          srs.interval = 1;
+          srs.ef = Math.max(1.3, (srs.ef || 2.5) - 0.2);
+          srs.wrongCount = (srs.wrongCount || 0) + 1;
+        } else {
+          srs.reps = (srs.reps || 0) + 1;
+          srs.interval = nextDays;
+          // Công thức điều chỉnh Ease Factor chuẩn SM-2
+          const q = grade === 2 ? 3 : (grade === 3 ? 4 : 5);
+          srs.ef = Math.max(1.3, (srs.ef || 2.5) + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02)));
+          srs.correctCount = (srs.correctCount || 0) + 1;
+        }
+
+        const today = getTodayStr(0);
+        srs.dueDate = getTodayStr(srs.interval);
+        srs.lastReviewed = today;
+
+        // Ghi nhận số thẻ mới đã học hôm nay
+        if (isFirstStudy) {
+          if (appState.stats.newStudiedToday.date !== today) {
+            appState.stats.newStudiedToday = { date: today, count: 0 };
+          }
+          appState.stats.newStudiedToday.count += 1;
+        }
+
+        // Ghi nhận thống kê số lượt ôn trong ngày
+        appState.stats.dailyReviews[today] = (appState.stats.dailyReviews[today] || 0) + 1;
+        saveState();
+      }
+
+      // Lấy danh sách thẻ cần ôn hôm nay (bao gồm thẻ đến hạn + thẻ mới trong giới hạn ngày)
+      let currentReviewQueue = [];
+      let currentReviewCard = null;
+      let isCardFlipped = false;
+
+      function buildReviewQueue() {
+        const today = getTodayStr(0);
+        if (appState.stats.newStudiedToday.date !== today) {
+          appState.stats.newStudiedToday = { date: today, count: 0 };
+        }
+        const remainingNewQuota = Math.max(0, (parseInt(appState.settings.newCardsPerDay, 10) || 15) - appState.stats.newStudiedToday.count);
+
+        const dueReviewWords = [];
+        const newWords = [];
+
+        appState.words.forEach(w => {
+          const isNew = w.srs.reps === 0 && !w.srs.lastReviewed;
+          if (isNew) {
+            newWords.push(w);
+          } else if (w.srs.dueDate <= today) {
+            dueReviewWords.push(w);
+          }
+        });
+
+        const allowedNewWords = newWords.slice(0, remainingNewQuota);
+        currentReviewQueue = [...dueReviewWords, ...allowedNewWords];
+
+        // Cập nhật huy hiệu & số liệu trên giao diện
+        document.getElementById('badgeDueWords').textContent = currentReviewQueue.length;
+        document.getElementById('srsCountNew').textContent = allowedNewWords.length;
+        document.getElementById('srsCountDue').textContent = dueReviewWords.length;
+        document.getElementById('srsCountDoneToday').textContent = appState.stats.dailyReviews[today] || 0;
+      }
+
+      function renderCurrentSrsCard() {
+        buildReviewQueue();
+        const frontEl = document.getElementById('srsFrontContent');
+        const backEl = document.getElementById('srsBackContent');
+        const gradeBtns = document.getElementById('srsGradeButtons');
+        const hintEl = document.getElementById('srsFlipHint');
+
+        if (currentReviewQueue.length === 0) {
+          currentReviewCard = null;
+          isCardFlipped = false;
+          frontEl.innerHTML = `
+            <div style="font-size:2.5rem; margin-bottom:0.5rem;">🎉</div>
+            <h3 style="font-size:1.25rem; margin-bottom:0.35rem;">Bạn đã hoàn thành hết thẻ cần ôn hôm nay!</h3>
+            <p style="font-size:0.9rem; color:var(--text-secondary);">Hãy thêm từ mới, tăng giới hạn từ mới/ngày hoặc chuyển sang tab Quiz để luyện phản xạ thêm.</p>
+          `;
+          backEl.style.display = 'none';
+          gradeBtns.style.display = 'none';
+          hintEl.style.display = 'none';
+          return;
+        }
+
+        currentReviewCard = currentReviewQueue[0];
+        isCardFlipped = false;
+        backEl.style.display = 'none';
+        gradeBtns.style.display = 'none';
+        hintEl.style.display = 'block';
+
+        const mode = appState.settings.srsMode || 'HANZI_TO_MEANING';
+
+        if (mode === 'HANZI_TO_MEANING') {
+          frontEl.innerHTML = `
+            <div class="hanzi-xl">${escapeHtml(currentReviewCard.hanzi)}</div>
+            <button type="button" class="btn btn-sm btn-soft" id="btnSrsSpeakFront" style="margin-top:0.75rem;">🔊 Nghe phát âm</button>
+          `;
+        } else if (mode === 'MEANING_TO_HANZI') {
+          frontEl.innerHTML = `
+            <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.35rem;">Nghĩa tiếng Việt (${escapeHtml(currentReviewCard.pos || 'Từ vựng')})</div>
+            <div style="font-size:1.75rem; font-weight:700;">${escapeHtml(currentReviewCard.meaning)}</div>
+          `;
+        } else {
+          // AUDIO_TO_MEANING
+          frontEl.innerHTML = `
+            <div style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:0.75rem;">Nghe phát âm và đoán nghĩa / chữ Hán</div>
+            <button type="button" class="btn btn-primary" id="btnSrsSpeakFront">🔊 Bấm để nghe phát âm</button>
+          `;
+          setTimeout(() => speakChinese(currentReviewCard.hanzi), 150);
+        }
+
+        // Chuẩn bị nội dung mặt sau
+        const aiEx = (currentReviewCard.aiData && currentReviewCard.aiData.examples && currentReviewCard.aiData.examples[0])
+          ? `<div style="margin-top:0.5rem; font-size:0.86rem; color:var(--text-secondary);">Ví dụ: <span class="hanzi-text">${escapeHtml(currentReviewCard.aiData.examples[0].zh)}</span> (${escapeHtml(currentReviewCard.aiData.examples[0].vi)})</div>`
+          : '';
+
+        backEl.innerHTML = `
+          <div class="hanzi-lg">${escapeHtml(currentReviewCard.hanzi)}</div>
+          <div class="vocab-pinyin" style="font-size:1.15rem;">${escapeHtml(currentReviewCard.pinyin)}</div>
+          <div class="vocab-meaning" style="font-size:1.2rem; margin-top:0.35rem;">${escapeHtml(currentReviewCard.meaning)}</div>
+          ${currentReviewCard.note ? `<div style="font-size:0.86rem; color:var(--text-muted); margin-top:0.35rem;">📝 ${escapeHtml(currentReviewCard.note)}</div>` : ''}
+          ${aiEx}
+          <div style="margin-top:0.75rem; display:flex; gap:0.5rem; justify-content:center;">
+            <button type="button" class="btn btn-sm btn-outline" id="btnSrsSpeakBack">🔊 Phát âm</button>
+            <button type="button" class="btn btn-sm btn-outline" id="btnSrsStrokeBack">✍️ Xem nét viết</button>
+          </div>
+        `;
+
+        // Cập nhật số ngày dự kiến trên 4 nút chấm điểm
+        [1, 2, 3, 4].forEach(g => {
+          const days = previewSm2Interval(currentReviewCard.srs, g);
+          document.getElementById(`nextInterval${g}`).textContent = `${days} ngày`;
+        });
+      }
+
+      function flipSrsCard() {
+        if (!currentReviewCard || isCardFlipped) return;
+        isCardFlipped = true;
+        document.getElementById('srsBackContent').style.display = 'block';
+        document.getElementById('srsGradeButtons').style.display = 'grid';
+        document.getElementById('srsFlipHint').style.display = 'none';
+        speakChinese(currentReviewCard.hanzi);
+      }
+
+      function gradeCurrentSrsCard(grade) {
+        if (!currentReviewCard || !isCardFlipped) return;
+        applySm2Review(currentReviewCard, grade);
+        renderCurrentSrsCard();
+        renderVocabList();
+        renderStats();
+      }
+
+      /* ======================================================================
+         5. HỆ THỐNG QUIZ 6 DẠNG (CẬP NHẬT SRS & ÔN LẠI TỪ SAI)
+         ====================================================================== */
+      // Bảng quy đổi nguyên âm có dấu thanh sang số thanh điệu (phục vụ so khớp ni3 hao3)
+      const TONE_MAP = {
+        'ā': ['a', 1], 'á': ['a', 2], 'ǎ': ['a', 3], 'à': ['a', 4],
+        'ē': ['e', 1], 'é': ['e', 2], 'ě': ['e', 3], 'è': ['e', 4],
+        'ī': ['i', 1], 'í': ['i', 2], 'ǐ': ['i', 3], 'ì': ['i', 4],
+        'ō': ['o', 1], 'ó': ['o', 2], 'ǒ': ['o', 3], 'ò': ['o', 4],
+        'ū': ['u', 1], 'ú': ['u', 2], 'ǔ': ['u', 3], 'ù': ['u', 4],
+        'ǖ': ['v', 1], 'ǘ': ['v', 2], 'ǚ': ['v', 3], 'ǜ': ['v', 4], 'ü': ['v', 5]
+      };
+
+      // Chuẩn hóa một âm tiết pinyin có dấu hoặc có số về dạng chuẩn (ví dụ: "nǐ" -> "ni3", "ni3" -> "ni3")
+      function normalizePinyinSyllable(syl) {
+        let s = syl.toLowerCase().replace(/u:/g, 'v').replace(/ü/g, 'v').trim();
+        if (!s) return '';
+        // Nếu người dùng đã gõ số ở cuối (ni3, hao3)
+        const numMatch = s.match(/^([a-zv]+)([1-5])$/);
+        if (numMatch) {
+          return numMatch[2] === '5' ? numMatch[1] : `${numMatch[1]}${numMatch[2]}`;
+        }
+        // Nếu chuỗi có dấu thanh điệu
+        let detectedTone = '';
+        let base = '';
+        for (const ch of s) {
+          if (TONE_MAP[ch]) {
+            base += TONE_MAP[ch][0];
+            if (TONE_MAP[ch][1] !== 5) detectedTone = String(TONE_MAP[ch][1]);
+          } else if (/[a-zv]/.test(ch)) {
+            base += ch;
+          }
+        }
+        return base + detectedTone;
+      }
+
+      // Kiểm tra đáp án Pinyin người dùng nhập (chấp nhận cả dấu "nǐ hǎo" lẫn số "ni3 hao3")
+      function checkPinyinMatch(userInput, targetPinyin) {
+        const cleanUser = (userInput || '').trim().toLowerCase();
+        const cleanTarget = (targetPinyin || '').trim().toLowerCase();
+        if (!cleanUser) return false;
+        if (cleanUser.replace(/\s+/g, '') === cleanTarget.replace(/\s+/g, '')) return true;
+
+        const userSyllables = cleanUser.split(/[\s,']+/).filter(Boolean).map(normalizePinyinSyllable);
+        const targetSyllables = cleanTarget.split(/[\s,']+/).filter(Boolean).map(normalizePinyinSyllable);
+
+        if (userSyllables.length === targetSyllables.length && userSyllables.join('') === targetSyllables.join('')) {
+          return true;
+        }
+        // Chấp nhận trường hợp thanh nhẹ (neutral tone) không gõ số
+        const stripNeutral = arr => arr.map(x => x.replace(/5$/, '')).join('');
+        return stripNeutral(userSyllables) === stripNeutral(targetSyllables);
+      }
+
+      let quizSession = {
+        type: 'MC_MEANING',
+        questions: [],
+        currentIndex: 0,
+        score: 0,
+        wrongWords: [],
+        matchingState: { selectedLeft: null, selectedRight: null, matchedIds: new Set() }
+      };
+
+      function shuffleArray(arr) {
+        const copy = [...arr];
+        for (let i = copy.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [copy[i], copy[j]] = [copy[j], copy[i]];
+        }
+        return copy;
+      }
+
+      // Trích xuất câu ví dụ có chứa từ mục tiêu để tạo câu hỏi điền chỗ trống (Cloze)
+      function getClozeSentenceForWord(word) {
+        if (word.aiData && Array.isArray(word.aiData.examples)) {
+          for (const ex of word.aiData.examples) {
+            if (ex.zh && ex.zh.includes(word.hanzi)) {
+              return {
+                masked: ex.zh.replace(new RegExp(word.hanzi, 'g'), ' [ ___ ] '),
+                hintVi: ex.vi || word.meaning
+              };
+            }
+          }
+        }
+        if (word.note && word.note.includes(word.hanzi)) {
+          return {
+            masked: word.note.replace(new RegExp(word.hanzi, 'g'), ' [ ___ ] '),
+            hintVi: word.meaning
+          };
+        }
+        return {
+          masked: `请用“[ ___ ]”造一个句子。 (Nghĩa: ${word.meaning})`,
+          hintVi: word.meaning
+        };
+      }
+
+      function startQuiz() {
+        if (appState.words.length < 4) {
+          showToast('Cần ít nhất 4 từ vựng trong sổ để tạo đáp án nhiễu cho Quiz!');
+          return;
+        }
+
+        const quizType = document.getElementById('quizTypeSelect').value;
+        const scope = document.getElementById('quizTagSelect').value;
+        const limit = parseInt(document.getElementById('quizCountSelect').value, 10) || 10;
+
+        let pool = [...appState.words];
+        if (scope.startsWith('TAG:')) {
+          const tag = scope.slice(4);
+          pool = pool.filter(w => (w.tags || []).includes(tag));
+        } else if (scope === 'HARD_FIRST') {
+          pool.sort((a, b) => ((b.srs.wrongCount || 0) - (a.srs.wrongCount || 0)) || ((a.srs.ef || 2.5) - (b.srs.ef || 2.5)));
+        } else {
+          pool = shuffleArray(pool);
+        }
+
+        if (pool.length === 0) {
+          showToast('Không có từ vựng nào trong phạm vi đã chọn!');
+          return;
+        }
+
+        const selectedWords = pool.slice(0, Math.min(limit, pool.length));
+        quizSession = {
+          type: quizType,
+          questions: selectedWords,
+          currentIndex: 0,
+          score: 0,
+          wrongWords: [],
+          matchingState: { selectedLeft: null, selectedRight: null, matchedIds: new Set() }
+        };
+
+        document.getElementById('quizResultArea').style.display = 'none';
+        document.getElementById('quizPlayArea').style.display = 'block';
+
+        if (quizType === 'MATCHING') {
+          renderMatchingQuiz();
+        } else {
+          renderQuizQuestion();
+        }
+      }
+
+      function renderQuizQuestion() {
+        const qWord = quizSession.questions[quizSession.currentIndex];
+        if (!qWord) {
+          finishQuiz();
+          return;
+        }
+
+        document.getElementById('quizProgressBadge').textContent = `Câu ${quizSession.currentIndex + 1} / ${quizSession.questions.length}`;
+        document.getElementById('quizScoreBadge').textContent = `Điểm: ${quizSession.score}`;
+
+        const container = document.getElementById('quizQuestionContainer');
+        const type = quizSession.type;
+
+        // Lấy 3 đáp án nhiễu từ các từ khác của người dùng
+        const distractors = shuffleArray(appState.words.filter(w => w.id !== qWord.id)).slice(0, 3);
+        const options = shuffleArray([qWord, ...distractors]);
+
+        if (type === 'MC_MEANING' || type === 'LISTEN_MEANING') {
+          if (type === 'LISTEN_MEANING') {
+            setTimeout(() => speakChinese(qWord.hanzi), 150);
+          }
+          container.innerHTML = `
+            <div style="text-align:center; margin-bottom:1.25rem;">
+              ${type === 'MC_MEANING'
+                ? `<div class="hanzi-xl">${escapeHtml(qWord.hanzi)}</div>
+                   <div class="vocab-pinyin">${escapeHtml(qWord.pinyin)}</div>`
+                : `<button type="button" class="btn btn-primary" id="btnQuizListenAgain">🔊 Nghe lại phát âm</button>
+                   <div style="font-size:0.85rem; color:var(--text-muted); margin-top:0.4rem;">Nghe âm thanh và chọn nghĩa đúng bên dưới</div>`
+              }
+            </div>
+            <div>
+              ${options.map(opt => `
+                <button type="button" class="quiz-option" data-opt-id="${escapeHtml(opt.id)}">
+                  <span>${escapeHtml(opt.meaning)}</span>
+                </button>
+              `).join('')}
+            </div>
+          `;
+        } else if (type === 'MC_HANZI') {
+          container.innerHTML = `
+            <div style="text-align:center; margin-bottom:1.25rem;">
+              <div style="font-size:0.85rem; color:var(--text-muted);">Chọn chữ Hán đúng với nghĩa:</div>
+              <div style="font-size:1.6rem; font-weight:700; margin-top:0.25rem;">${escapeHtml(qWord.meaning)}</div>
+            </div>
+            <div>
+              ${options.map(opt => `
+                <button type="button" class="quiz-option" data-opt-id="${escapeHtml(opt.id)}">
+                  <span class="hanzi-text" style="font-size:1.35rem;">${escapeHtml(opt.hanzi)}</span>
+                  <span style="font-size:0.85rem; color:var(--text-muted);">${escapeHtml(opt.pinyin)}</span>
+                </button>
+              `).join('')}
+            </div>
+          `;
+        } else if (type === 'TYPE_PINYIN') {
+          container.innerHTML = `
+            <div style="text-align:center; margin-bottom:1.25rem;">
+              <div class="hanzi-xl">${escapeHtml(qWord.hanzi)}</div>
+              <div style="font-size:1.05rem; color:var(--text-secondary); margin-top:0.25rem;">Nghĩa: <strong>${escapeHtml(qWord.meaning)}</strong></div>
+              <p style="font-size:0.82rem; color:var(--text-muted); margin-top:0.25rem;">Nhập Pinyin có dấu (VD: <code>nǐ hǎo</code>) hoặc dùng số thanh điệu (VD: <code>ni3 hao3</code>)</p>
+            </div>
+            <form id="quizPinyinForm" style="max-width:420px; margin:0 auto; display:flex; gap:0.5rem;">
+              <input type="text" id="quizPinyinInput" class="input" placeholder="Nhập pinyin..." autocomplete="off" required>
+              <button type="submit" class="btn btn-primary">Kiểm tra</button>
+            </form>
+            <div id="quizPinyinFeedback" style="text-align:center; margin-top:0.85rem;"></div>
+          `;
+          setTimeout(() => {
+            const inp = document.getElementById('quizPinyinInput');
+            if (inp) inp.focus();
+          }, 50);
+        } else if (type === 'CLOZE') {
+          const cloze = getClozeSentenceForWord(qWord);
+          container.innerHTML = `
+            <div style="text-align:center; margin-bottom:1.25rem;">
+              <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.35rem;">Chọn từ thích hợp điền vào chỗ trống:</div>
+              <div class="hanzi-text" style="font-size:1.5rem; margin-bottom:0.4rem;">${escapeHtml(cloze.masked)}</div>
+              <div style="font-size:0.95rem; color:var(--text-secondary);">Gợi ý nghĩa: <strong>${escapeHtml(cloze.hintVi)}</strong></div>
+            </div>
+            <div>
+              ${options.map(opt => `
+                <button type="button" class="quiz-option" data-opt-id="${escapeHtml(opt.id)}">
+                  <span class="hanzi-text" style="font-size:1.25rem;">${escapeHtml(opt.hanzi)}</span>
+                  <span style="font-size:0.85rem; color:var(--text-muted);">${escapeHtml(opt.pinyin)}</span>
+                </button>
+              `).join('')}
+            </div>
+          `;
+        }
+      }
+
+      // Xử lý khi người dùng chọn đáp án trắc nghiệm trong Quiz
+      function handleQuizOptionClick(selectedWordId, btnElement) {
+        const qWord = quizSession.questions[quizSession.currentIndex];
+        if (!qWord) return;
+
+        const allBtns = document.querySelectorAll('#quizQuestionContainer .quiz-option');
+        allBtns.forEach(b => { b.disabled = true; });
+
+        const isCorrect = selectedWordId === qWord.id;
+        if (isCorrect) {
+          btnElement.classList.add('correct');
+          quizSession.score += 1;
+          applySm2Review(qWord, 3); // Cập nhật SRS: Tốt
+          speakChinese(qWord.hanzi);
+        } else {
+          btnElement.classList.add('wrong');
+          allBtns.forEach(b => {
+            if (b.getAttribute('data-opt-id') === qWord.id) b.classList.add('correct');
+          });
+          quizSession.wrongWords.push(qWord);
+          applySm2Review(qWord, 1); // Cập nhật SRS: Lại
+        }
+
+        setTimeout(() => {
+          quizSession.currentIndex += 1;
+          renderQuizQuestion();
+        }, 1100);
+      }
+
+      // Xử lý dạng Ghép cặp (Matching Hán - Nghĩa)
+      function renderMatchingQuiz() {
+        const pairs = quizSession.questions.slice(0, 6); // Tối đa 6 cặp trên 1 màn hình để dễ nhìn
+        quizSession.questions = pairs;
+        document.getElementById('quizProgressBadge').textContent = `Ghép ${pairs.length} cặp từ`;
+        document.getElementById('quizScoreBadge').textContent = `Đã ghép: ${quizSession.matchingState.matchedIds.size} / ${pairs.length}`;
+
+        const leftItems = shuffleArray(pairs.map(w => ({ id: w.id, text: w.hanzi, isHanzi: true })));
+        const rightItems = shuffleArray(pairs.map(w => ({ id: w.id, text: w.meaning, isHanzi: false })));
+
+        const container = document.getElementById('quizQuestionContainer');
+        container.innerHTML = `
+          <p style="font-size:0.88rem; color:var(--text-secondary); margin-bottom:0.85rem; text-align:center;">
+            Bấm chọn 1 chữ Hán ở cột trái và 1 nghĩa tiếng Việt tương ứng ở cột phải.
+          </p>
+          <div class="matching-grid">
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+              ${leftItems.map(item => `
+                <div class="match-card hanzi-text" style="font-size:1.35rem;" data-match-side="left" data-id="${escapeHtml(item.id)}">
+                  ${escapeHtml(item.text)}
+                </div>
+              `).join('')}
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+              ${rightItems.map(item => `
+                <div class="match-card" data-match-side="right" data-id="${escapeHtml(item.id)}">
+                  ${escapeHtml(item.text)}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      function finishQuiz() {
+        document.getElementById('quizPlayArea').style.display = 'none';
+        const resArea = document.getElementById('quizResultArea');
+        resArea.style.display = 'block';
+
+        const total = quizSession.questions.length;
+        const wrongUnique = Array.from(new Map(quizSession.wrongWords.map(w => [w.id, w])).values());
+
+        resArea.innerHTML = `
+          <div style="text-align:center; padding:1rem 0;">
+            <div style="font-size:2.5rem;">🏆</div>
+            <h3 style="font-size:1.35rem; margin-top:0.25rem;">Hoàn thành bài Quiz!</h3>
+            <p style="font-size:1.05rem; color:var(--text-secondary); margin-top:0.25rem;">
+              Điểm số của bạn: <strong style="color:var(--primary);">${quizSession.score} / ${total}</strong> (Đã cập nhật dữ liệu SRS)
+            </p>
+          </div>
+          ${wrongUnique.length > 0 ? `
+            <div style="margin-top:1rem; border-top:1px solid var(--border-color); padding-top:1rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+                <h4 style="font-size:0.95rem; color:var(--danger);">Các từ trả lời sai (${wrongUnique.length} từ):</h4>
+                <button type="button" class="btn btn-sm btn-primary" id="btnSendWrongToReview">📥 Đưa các từ sai vào danh sách Ôn lại ngay</button>
+              </div>
+              <div class="grid-2">
+                ${wrongUnique.map(w => `
+                  <div style="padding:0.65rem; border:1px solid var(--border-color); border-radius:var(--radius-sm); display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                      <span class="hanzi-text" style="font-size:1.25rem; font-weight:700;">${escapeHtml(w.hanzi)}</span>
+                      <span style="color:var(--primary); font-weight:600; margin-left:0.4rem;">${escapeHtml(w.pinyin)}</span>
+                      <div style="font-size:0.86rem; color:var(--text-secondary);">${escapeHtml(w.meaning)}</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-soft" data-action="speak" data-id="${escapeHtml(w.id)}">🔊</button>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : `<p style="text-align:center; color:var(--success); font-weight:600;">Xuất sắc! Bạn không sai từ nào trong lượt này.</p>`}
+        `;
+
+        renderVocabList();
+        renderCurrentSrsCard();
+        renderStats();
+      }
+
+      /* ======================================================================
+         6. MODAL XEM THỨ TỰ NÉT VIẾT (HANZI WRITER) & CHI TIẾT AI
+         ====================================================================== */
+      let activeHanziWriters = [];
+
+      function openWordDetailModal(wordId) {
+        const word = appState.words.find(w => w.id === wordId);
+        if (!word) return;
+
+        const modal = document.getElementById('wordDetailModal');
+        const titleEl = document.getElementById('modalWordTitle');
+        const bodyEl = document.getElementById('modalWordBody');
+
+        titleEl.innerHTML = `<span class="hanzi-text">${escapeHtml(word.hanzi)}</span> (${escapeHtml(word.pinyin)}) - ${escapeHtml(word.meaning)}`;
+
+        // Tách từng ký tự chữ Hán để khởi tạo HanziWriter
+        const chars = Array.from(word.hanzi).filter(ch => /[\u4e00-\u9fa5]/.test(ch));
+
+        bodyEl.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <span style="font-size:0.88rem; color:var(--text-secondary);">Thứ tự nét viết (Bấm "Chạy nét" hoặc "Tập viết" trên từng chữ):</span>
+            <button type="button" class="btn btn-sm btn-accent" id="btnModalSpeak">🔊 Phát âm từ này</button>
+          </div>
+          <div class="hanzi-writer-box" id="hanziWriterContainer">
+            ${chars.map((ch, idx) => `
+              <div class="writer-char-card">
+                <div id="writer-target-${idx}" class="writer-target"></div>
+                <div style="display:flex; gap:0.35rem;">
+                  <button type="button" class="btn btn-sm btn-soft" data-writer-animate="${idx}">▶️ Chạy nét</button>
+                  <button type="button" class="btn btn-sm btn-outline" data-writer-quiz="${idx}">✍️ Tập viết</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div id="modalAiSection" style="margin-top:1rem;">
+            ${renderSavedAiHtml(word)}
+          </div>
+        `;
+
+        modal.classList.add('open');
+
+        // Khởi tạo đối tượng HanziWriter cho từng chữ Hán
+        activeHanziWriters = [];
+        if (window.HanziWriter) {
+          chars.forEach((ch, idx) => {
+            try {
+              const writer = window.HanziWriter.create(`writer-target-${idx}`, ch, {
+                width: 160,
+                height: 160,
+                padding: 10,
+                showOutline: true,
+                strokeAnimationSpeed: 1,
+                delayBetweenStrokes: 180,
+                strokeColor: '#dc2626',
+                radicalColor: '#2563eb'
+              });
+              activeHanziWriters[idx] = writer;
+            } catch (e) {
+              console.warn('Không thể tạo HanziWriter cho chữ:', ch, e);
+            }
+          });
+        }
+
+        const speakBtn = document.getElementById('btnModalSpeak');
+        if (speakBtn) {
+          speakBtn.onclick = () => speakChinese(word.hanzi);
+        }
+      }
+
+      /* ======================================================================
+         7. TÍCH HỢP GEMINI API (SINH VÍ DỤ HSK, BỘ THỦ HÁN-VIỆT, HỘI THOẠI)
+         ====================================================================== */
+      function updateAiTabVisibility() {
+        const hasKey = Boolean((appState.settings.geminiApiKey || '').trim());
+        document.getElementById('aiNoKeyNotice').style.display = hasKey ? 'none' : 'block';
+        document.getElementById('aiCurrentHskBadge').textContent = `Theo trình độ HSK ${appState.settings.hskLevel || '2'}`;
+
+        // Đổ danh sách từ vào dropdown và checklist
+        const singleSelect = document.getElementById('aiSingleWordSelect');
+        const currentVal = singleSelect.value;
+        singleSelect.innerHTML = appState.words.map(w =>
+          `<option value="${escapeHtml(w.id)}">${escapeHtml(w.hanzi)} (${escapeHtml(w.pinyin)}) - ${escapeHtml(w.meaning)}</option>`
+        ).join('');
+        if (currentVal && appState.words.some(w => w.id === currentVal)) {
+          singleSelect.value = currentVal;
+        }
+
+        const checklist = document.getElementById('aiMultiWordChecklist');
+        checklist.innerHTML = appState.words.map(w => `
+          <label style="display:flex; align-items:center; gap:0.5rem; padding:0.3rem 0; font-size:0.9rem; cursor:pointer;">
+            <input type="checkbox" class="ai-multi-checkbox" value="${escapeHtml(w.id)}">
+            <span class="hanzi-text" style="font-weight:700;">${escapeHtml(w.hanzi)}</span>
+            <span style="color:var(--primary);">${escapeHtml(w.pinyin)}</span>
+            <span style="color:var(--text-secondary);">— ${escapeHtml(w.meaning)}</span>
+          </label>
+        `).join('');
+
+        // Vô hiệu hóa nút gọi API nếu chưa nhập key
+        document.getElementById('btnGenerateSingleAi').disabled = !hasKey;
+        document.getElementById('btnGenerateMultiAi').disabled = !hasKey;
+      }
+
+      function renderSavedAiHtml(word) {
+        if (!word || !word.aiData || (!word.aiData.examples && !word.aiData.etymology)) {
+          return `<div class="ai-box">Từ <strong>${escapeHtml(word ? word.hanzi : '')}</strong> chưa có dữ liệu AI. Hãy bấm nút "Tạo bằng AI" để sinh ví dụ và mẹo nhớ.</div>`;
+        }
+        const ai = word.aiData;
+        const exHtml = (ai.examples || []).map((ex, i) => `
+          <div style="margin-bottom:0.45rem;">
+            <div><strong>${i + 1}.</strong> <span class="hanzi-text" style="font-size:1.05rem;">${escapeHtml(ex.zh)}</span>
+              <button type="button" class="btn btn-sm btn-soft" data-speak-text="${escapeHtml(ex.zh)}" style="padding:0.1rem 0.4rem;">🔊</button>
+            </div>
+            <div style="color:var(--primary); font-size:0.84rem;">${escapeHtml(ex.pinyin)}</div>
+            <div style="color:var(--text-secondary); font-size:0.84rem;">${escapeHtml(ex.vi)}</div>
+          </div>
+        `).join('');
+
+        const dlgHtml = (ai.dialogue || []).map(line => `
+          <div style="margin-bottom:0.35rem;">
+            <strong>${escapeHtml(line.speaker || 'A')}:</strong> <span class="hanzi-text">${escapeHtml(line.zh)}</span>
+            <button type="button" class="btn btn-sm btn-soft" data-speak-text="${escapeHtml(line.zh)}" style="padding:0.1rem 0.4rem;">🔊</button>
+            <div style="font-size:0.8rem; color:var(--text-muted);">${escapeHtml(line.pinyin)} — ${escapeHtml(line.vi)}</div>
+          </div>
+        `).join('');
+
+        return `
+          <div class="ai-box">
+            <h4>a) Câu ví dụ (Cấp độ HSK ${escapeHtml(appState.settings.hskLevel)})</h4>
+            ${exHtml || '<p>Chưa có câu ví dụ.</p>'}
+          </div>
+          <div class="ai-box">
+            <h4>b) Phân tích bộ thủ, âm Hán-Việt &amp; Câu chuyện nhớ (Mnemonic)</h4>
+            <p>${escapeHtml(ai.etymology || 'Chưa có thông tin.')}</p>
+          </div>
+          <div class="ai-box">
+            <h4>c) Từ dễ nhầm lẫn &amp; Khác biệt cách dùng</h4>
+            <p>${escapeHtml(ai.confusable || 'Chưa có thông tin.')}</p>
+          </div>
+          ${dlgHtml ? `
+            <div class="ai-box">
+              <h4>d) Hội thoại ngắn đời thường</h4>
+              ${dlgHtml}
+            </div>
+          ` : ''}
+        `;
+      }
+
+      // Hàm gọi Gemini API trả về JSON thuần an toàn, xử lý đầy đủ lỗi mạng / key sai / hết quota
+      async function callGeminiJson(promptText) {
+        const apiKey = (appState.settings.geminiApiKey || '').trim();
+        const model = appState.settings.geminiModel || 'gemini-2.5-flash';
+        if (!apiKey) {
+          throw new Error('Bạn chưa nhập Gemini API Key trong phần Cài đặt.');
+        }
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        let response;
+        try {
+          response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: promptText }] }],
+              generationConfig: {
+                responseMimeType: 'application/json',
+                temperature: 0.4
+              }
+            })
+          });
+        } catch (netErr) {
+          throw new Error('Không thể kết nối mạng tới máy chủ Google Gemini API. Vui lòng kiểm tra kết nối Internet.');
+        }
+
+        if (!response.ok) {
+          if (response.status === 400 || response.status === 403) {
+            throw new Error('API Key không hợp lệ hoặc không có quyền truy cập model này. Hãy kiểm tra lại trong tab Cài đặt.');
+          }
+          if (response.status === 429) {
+            throw new Error('Đã vượt quá giới hạn gọi miễn phí mỗi phút (Quota 429). Vui lòng đợi khoảng 30-60 giây rồi thử lại.');
+          }
+          throw new Error(`Lỗi máy chủ Gemini (Mã HTTP ${response.status}).`);
+        }
+
+        const data = await response.json();
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        if (!rawText) {
+          throw new Error('AI không trả về dữ liệu hợp lệ.');
+        }
+
+        // Bóc tách JSON an toàn ngay cả khi model bọc trong ```json ... ```
+        const cleaned = rawText.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim();
+        try {
+          return JSON.parse(cleaned);
+        } catch (parseErr) {
+          throw new Error('Không thể phân tích cú pháp JSON từ phản hồi của AI.');
+        }
+      }
+
+      async function generateSingleWordAi(wordId) {
+        const word = appState.words.find(w => w.id === wordId);
+        if (!word) return;
+
+        const container = document.getElementById('aiSingleResultContainer');
+        const btn = document.getElementById('btnGenerateSingleAi');
+        btn.disabled = true;
+        btn.textContent = '⏳ Đang tạo bằng AI...';
+        container.innerHTML = `<div class="ai-box">Đang kết nối Gemini AI để phân tích từ <strong>${escapeHtml(word.hanzi)}</strong>...</div>`;
+
+        const hsk = appState.settings.hskLevel || '2';
+        const prompt = `Bạn là giáo viên dạy tiếng Trung cho người Việt Nam (trình độ hiện tại HSK ${hsk}).
+Hãy phân tích từ vựng "${word.hanzi}" (pinyin: ${word.pinyin}, nghĩa: ${word.meaning}) và trả về ĐÚNG ĐỊNH DẠNG JSON THUẦN (không markdown) theo cấu trúc sau:
+{
+  "examples": [
+    {"zh": "Câu ví dụ 1 chứa từ ${word.hanzi} phù hợp HSK ${hsk}", "pinyin": "Pinyin có dấu", "vi": "Nghĩa tiếng Việt"},
+    {"zh": "Câu ví dụ 2", "pinyin": "Pinyin", "vi": "Nghĩa tiếng Việt"},
+    {"zh": "Câu ví dụ 3", "pinyin": "Pinyin", "vi": "Nghĩa tiếng Việt"}
+  ],
+  "etymology": "Phân tích bộ thủ/cấu tạo chữ, âm Hán-Việt và câu chuyện nhớ (mnemonic) ngắn gọn dễ nhớ cho người Việt",
+  "confusable": "Các từ dễ nhầm lẫn với ${word.hanzi} và sự khác biệt về cách dùng",
+  "dialogue": [
+    {"speaker": "A", "zh": "Câu thoại 1", "pinyin": "Pinyin", "vi": "Dịch Việt"},
+    {"speaker": "B", "zh": "Câu thoại 2", "pinyin": "Pinyin", "vi": "Dịch Việt"},
+    {"speaker": "A", "zh": "Câu thoại 3", "pinyin": "Pinyin", "vi": "Dịch Việt"},
+    {"speaker": "B", "zh": "Câu thoại 4", "pinyin": "Pinyin", "vi": "Dịch Việt"}
+  ]
+}`;
+
+        try {
+          const result = await callGeminiJson(prompt);
+          word.aiData = {
+            examples: Array.isArray(result.examples) ? result.examples : [],
+            etymology: result.etymology || '',
+            confusable: result.confusable || '',
+            dialogue: Array.isArray(result.dialogue) ? result.dialogue : []
+          };
+          saveState();
+          renderVocabList();
+          container.innerHTML = renderSavedAiHtml(word);
+          showToast(`Đã lưu dữ liệu AI cho từ "${word.hanzi}"!`);
+        } catch (err) {
+          container.innerHTML = `<div class="ai-box" style="border:1px solid var(--danger); color:var(--danger);">⚠️ ${escapeHtml(err.message)}</div>`;
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '✨ Tạo bằng AI';
+        }
+      }
+
+      async function generateMultiWordsAi() {
+        const checkedBoxes = Array.from(document.querySelectorAll('.ai-multi-checkbox:checked'));
+        if (checkedBoxes.length < 2) {
+          showToast('Hãy chọn ít nhất 2 từ vựng để AI tạo đoạn văn / hội thoại!');
+          return;
+        }
+        const selectedWords = checkedBoxes
+          .map(cb => appState.words.find(w => w.id === cb.value))
+          .filter(Boolean);
+
+        const container = document.getElementById('aiMultiResultContainer');
+        const btn = document.getElementById('btnGenerateMultiAi');
+        btn.disabled = true;
+        btn.textContent = '⏳ Đang sáng tác...';
+        container.innerHTML = `<div class="ai-box">Đang viết đoạn hội thoại kết hợp ${selectedWords.length} từ đã chọn...</div>`;
+
+        const wordListStr = selectedWords.map(w => `${w.hanzi} (${w.meaning})`).join(', ');
+        const hsk = appState.settings.hskLevel || '2';
+
+        const prompt = `Bạn là giáo viên tiếng Trung cho người Việt (trình độ HSK ${hsk}).
+Hãy viết một đoạn văn hoặc hội thoại ngắn tự nhiên trong đời sống sử dụng TẤT CẢ các từ sau: ${wordListStr}.
+Trả về JSON thuần (không markdown) theo đúng cấu trúc:
+{
+  "title": "Tiêu đề ngắn bằng tiếng Việt",
+  "chineseParagraph": "Đoạn văn/hội thoại tiếng Trung",
+  "pinyinParagraph": "Phiên âm Pinyin tương ứng",
+  "vietnameseTranslation": "Bản dịch tiếng Việt tự nhiên"
+}`;
+
+        try {
+          const res = await callGeminiJson(prompt);
+          container.innerHTML = `
+            <div class="ai-box">
+              <h4>${escapeHtml(res.title || 'Đoạn văn ứng dụng các từ đã chọn')}</h4>
+              <div class="hanzi-text" style="font-size:1.2rem; margin:0.4rem 0;">
+                ${escapeHtml(res.chineseParagraph || '')}
+                <button type="button" class="btn btn-sm btn-soft" data-speak-text="${escapeHtml(res.chineseParagraph || '')}">🔊 Nghe cả đoạn</button>
+              </div>
+              <div style="color:var(--primary); font-size:0.88rem; margin-bottom:0.4rem;">${escapeHtml(res.pinyinParagraph || '')}</div>
+              <div style="color:var(--text-secondary); font-size:0.88rem;">${escapeHtml(res.vietnameseTranslation || '')}</div>
+            </div>
+          `;
+        } catch (err) {
+          container.innerHTML = `<div class="ai-box" style="border:1px solid var(--danger); color:var(--danger);">⚠️ ${escapeHtml(err.message)}</div>`;
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '✨ Tạo đoạn văn / hội thoại từ các từ đã chọn';
+        }
+      }
+
+      /* ======================================================================
+         8. THỐNG KÊ HỌC TẬP & BIỂU ĐỒ 14 NGÀY GẦN NHẤT + STREAK
+         ====================================================================== */
+      function calculateStreak() {
+        const reviews = appState.stats.dailyReviews || {};
+        let streak = 0;
+        let offset = 0;
+        // Nếu hôm nay chưa học nhưng hôm qua có học thì tính tiếp từ hôm qua
+        if (!reviews[getTodayStr(0)] && reviews[getTodayStr(-1)]) {
+          offset = -1;
+        }
+        while (true) {
+          const dayStr = getTodayStr(offset);
+          if ((reviews[dayStr] || 0) > 0) {
+            streak += 1;
+            offset -= 1;
+          } else {
+            break;
+          }
+        }
+        return streak;
+      }
+
+      function renderStats() {
+        const total = appState.words.length;
+        let mastered = 0;
+        let learning = 0;
+        let newCount = 0;
+
+        appState.words.forEach(w => {
+          if (w.srs.reps === 0 && !w.srs.lastReviewed) {
+            newCount += 1;
+          } else if (w.srs.interval >= 21) {
+            mastered += 1;
+          } else {
+            learning += 1;
+          }
+        });
+
+        document.getElementById('statTotalWords').textContent = total;
+        document.getElementById('statMasteredWords').textContent = mastered;
+        document.getElementById('statLearningWords').textContent = learning;
+        document.getElementById('statNewWords').textContent = newCount;
+
+        const streak = calculateStreak();
+        document.getElementById('headerStreakBadge').textContent = `🔥 Streak: ${streak} ngày`;
+        document.getElementById('statStreakDetail').textContent = `🔥 Chuỗi ngày học liên tiếp (Streak): ${streak} ngày`;
+
+        // Vẽ biểu đồ 14 ngày gần nhất
+        const days = [];
+        let maxCount = 5;
+        for (let i = -13; i <= 0; i++) {
+          const dateStr = getTodayStr(i);
+          const count = appState.stats.dailyReviews[dateStr] || 0;
+          if (count > maxCount) maxCount = count;
+          const shortLabel = dateStr.slice(8, 10) + '/' + dateStr.slice(5, 7);
+          days.push({ dateStr, shortLabel, count });
+        }
+
+        const chartEl = document.getElementById('statsChart14d');
+        chartEl.innerHTML = days.map(d => {
+          const heightPct = Math.max(4, Math.round((d.count / maxCount) * 100));
+          return `
+            <div class="chart-col" title="Ngày ${d.dateStr}: ${d.count} lượt ôn">
+              <span class="chart-count">${d.count}</span>
+              <div class="chart-bar" style="height:${heightPct}%;"></div>
+              <span class="chart-date">${d.shortLabel}</span>
+            </div>
+          `;
+        }).join('');
+      }
+
+      /* ======================================================================
+         9. SAO LƯU (XUẤT / NHẬP JSON) & KHỞI TẠO SỰ KIỆN
+         ====================================================================== */
+      function exportDataToJson() {
+        const dataStr = JSON.stringify(appState, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `hanzi_srs_backup_${getTodayStr(0)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        showToast('Đã tải xuống file sao lưu JSON thành công!');
+      }
+
+      function initEvents() {
+        // Điều hướng Tab
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const target = btn.getAttribute('data-tab');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(`tab-${target}`).classList.add('active');
+
+            if (target === 'review') renderCurrentSrsCard();
+            if (target === 'ai') updateAiTabVisibility();
+            if (target === 'stats') renderStats();
+          });
+        });
+
+        // Chuyển đổi giao diện Sáng / Tối
+        document.getElementById('btnToggleTheme').addEventListener('click', () => {
+          const order = ['system', 'light', 'dark'];
+          const next = order[(order.indexOf(appState.settings.theme) + 1) % order.length];
+          applyTheme(next);
+          saveState();
+        });
+
+        // Ẩn banner nhắc sao lưu vĩnh viễn hoặc Mở cài đặt đồng bộ tự động
+        document.getElementById('btnDismissBanner').addEventListener('click', () => {
+          document.getElementById('backupBanner').style.display = 'none';
+          appState.settings.hideBackupBanner = true;
+          saveState({ skipCloud: true });
+        });
+        document.getElementById('btnQuickSetupSync').addEventListener('click', () => {
+          document.querySelector('.tab-btn[data-tab="settings"]').click();
+          const syncCard = document.getElementById('autoSyncCard');
+          if (syncCard) syncCard.scrollIntoView({ behavior: 'smooth' });
+        });
+        document.getElementById('btnQuickExport').addEventListener('click', exportDataToJson);
+
+        // Tự động điền Pinyin khi nhập chữ Hán
+        const inputHanzi = document.getElementById('inputHanzi');
+        const inputPinyin = document.getElementById('inputPinyin');
+        inputHanzi.addEventListener('input', () => {
+          const autoPinyin = convertHanziToPinyin(inputHanzi.value);
+          if (autoPinyin) {
+            inputPinyin.value = autoPinyin;
+          }
+        });
+
+        // Lưu từ mới hoặc cập nhật từ đang sửa
+        document.getElementById('vocabForm').addEventListener('submit', e => {
+          e.preventDefault();
+          const hanzi = inputHanzi.value.trim();
+          const pinyin = inputPinyin.value.trim() || convertHanziToPinyin(hanzi);
+          const meaning = document.getElementById('inputMeaning').value.trim();
+          const pos = document.getElementById('inputPos').value;
+          const tags = document.getElementById('inputTags').value.split(',').map(t => t.trim()).filter(Boolean);
+          const note = document.getElementById('inputNote').value.trim();
+          const editId = document.getElementById('editWordId').value;
+
+          if (!hanzi || !meaning) return;
+
+          if (editId) {
+            const existing = appState.words.find(w => w.id === editId);
+            if (existing) {
+              existing.hanzi = hanzi;
+              existing.pinyin = pinyin;
+              existing.meaning = meaning;
+              existing.pos = pos;
+              existing.tags = tags;
+              existing.note = note;
+              showToast(`Đã cập nhật từ "${hanzi}"!`);
+            }
+          } else {
+            appState.words.unshift({
+              id: 'w_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+              hanzi,
+              pinyin,
+              meaning,
+              pos,
+              tags: tags.length ? tags : [`HSK${appState.settings.hskLevel}`],
+              note,
+              srs: { ef: 2.5, interval: 0, reps: 0, dueDate: getTodayStr(0), correctCount: 0, wrongCount: 0, lastReviewed: null },
+              aiData: null
+            });
+            showToast(`Đã thêm từ mới "${hanzi}"!`);
+          }
+
+          document.getElementById('vocabForm').reset();
+          document.getElementById('editWordId').value = '';
+          document.getElementById('vocabFormTitle').textContent = '➕ Thêm từ mới';
+          document.getElementById('btnCancelEdit').style.display = 'none';
+          saveState();
+          renderVocabList();
+          buildReviewQueue();
+        });
+
+        document.getElementById('btnCancelEdit').addEventListener('click', () => {
+          document.getElementById('vocabForm').reset();
+          document.getElementById('editWordId').value = '';
+          document.getElementById('vocabFormTitle').textContent = '➕ Thêm từ mới';
+          document.getElementById('btnCancelEdit').style.display = 'none';
+        });
+
+        // Thêm hàng loạt theo cú pháp "汉字 | nghĩa"
+        document.getElementById('btnBulkAdd').addEventListener('click', () => {
+          const raw = document.getElementById('bulkTextarea').value.trim();
+          const defaultTag = document.getElementById('bulkDefaultTag').value.trim();
+          if (!raw) {
+            showToast('Hãy dán danh sách từ theo dạng: 汉字 | nghĩa');
+            return;
+          }
+          const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          let added = 0;
+          lines.forEach(line => {
+            const parts = line.split('|').map(p => p.trim());
+            if (parts.length >= 2 && parts[0] && parts[1]) {
+              const hanzi = parts[0];
+              const meaning = parts[1];
+              const extraTags = parts[2] ? parts[2].split(',').map(t => t.trim()).filter(Boolean) : [];
+              const tags = [...new Set([defaultTag, ...extraTags].filter(Boolean))];
+              appState.words.unshift({
+                id: 'w_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7) + '_' + added,
+                hanzi,
+                pinyin: convertHanziToPinyin(hanzi),
+                meaning,
+                pos: 'Từ vựng',
+                tags: tags.length ? tags : [`HSK${appState.settings.hskLevel}`],
+                note: '',
+                srs: { ef: 2.5, interval: 0, reps: 0, dueDate: getTodayStr(0), correctCount: 0, wrongCount: 0, lastReviewed: null },
+                aiData: null
+              });
+              added += 1;
+            }
+          });
+
+          if (added > 0) {
+            document.getElementById('bulkTextarea').value = '';
+            saveState();
+            renderVocabList();
+            buildReviewQueue();
+            showToast(`Đã thêm thành công ${added} từ vựng và tự động điền Pinyin!`);
+          } else {
+            showToast('Không nhận diện được dòng hợp lệ. Hãy nhập dạng: 汉字 | nghĩa');
+          }
+        });
+
+        // Tìm kiếm & lọc từ vựng
+        document.getElementById('searchVocabInput').addEventListener('input', renderVocabList);
+        document.getElementById('filterTagSelect').addEventListener('change', renderVocabList);
+        document.getElementById('filterStatusSelect').addEventListener('change', renderVocabList);
+
+        // Ủy quyền sự kiện trên danh sách từ vựng
+        document.getElementById('vocabListContainer').addEventListener('click', e => {
+          const btn = e.target.closest('button[data-action]');
+          if (!btn) return;
+          const action = btn.getAttribute('data-action');
+          const id = btn.getAttribute('data-id');
+          const word = appState.words.find(w => w.id === id);
+          if (!word) return;
+
+          if (action === 'speak') {
+            speakChinese(word.hanzi);
+          } else if (action === 'stroke') {
+            openWordDetailModal(id);
+          } else if (action === 'ai-quick') {
+            document.querySelector('.tab-btn[data-tab="ai"]').click();
+            document.getElementById('aiSingleWordSelect').value = id;
+            if ((appState.settings.geminiApiKey || '').trim()) {
+              generateSingleWordAi(id);
+            } else {
+              document.getElementById('aiSingleResultContainer').innerHTML = renderSavedAiHtml(word);
+            }
+          } else if (action === 'edit') {
+            document.getElementById('editWordId').value = word.id;
+            document.getElementById('inputHanzi').value = word.hanzi;
+            document.getElementById('inputPinyin').value = word.pinyin;
+            document.getElementById('inputMeaning').value = word.meaning;
+            document.getElementById('inputPos').value = word.pos || 'Danh từ';
+            document.getElementById('inputTags').value = (word.tags || []).join(', ');
+            document.getElementById('inputNote').value = word.note || '';
+            document.getElementById('vocabFormTitle').textContent = `✏️ Sửa từ: ${word.hanzi}`;
+            document.getElementById('btnCancelEdit').style.display = 'inline-flex';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } else if (action === 'delete') {
+            appState.words = appState.words.filter(w => w.id !== id);
+            saveState();
+            renderVocabList();
+            buildReviewQueue();
+            showToast(`Đã xóa từ "${word.hanzi}".`);
+          }
+        });
+
+        // Sự kiện Flashcard SM-2
+        document.getElementById('srsFlashcard').addEventListener('click', e => {
+          if (e.target.closest('#btnSrsSpeakFront') || e.target.closest('#btnSrsSpeakBack')) {
+            e.stopPropagation();
+            if (currentReviewCard) speakChinese(currentReviewCard.hanzi);
+            return;
+          }
+          if (e.target.closest('#btnSrsStrokeBack')) {
+            e.stopPropagation();
+            if (currentReviewCard) openWordDetailModal(currentReviewCard.id);
+            return;
+          }
+          flipSrsCard();
+        });
+
+        document.querySelectorAll('#srsGradeButtons .grade-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const g = parseInt(btn.getAttribute('data-grade'), 10);
+            gradeCurrentSrsCard(g);
+          });
+        });
+
+        document.getElementById('srsModeSelect').addEventListener('change', e => {
+          appState.settings.srsMode = e.target.value;
+          saveState();
+          renderCurrentSrsCard();
+        });
+
+        document.getElementById('srsDailyNewLimit').addEventListener('change', e => {
+          const val = Math.max(1, parseInt(e.target.value, 10) || 15);
+          appState.settings.newCardsPerDay = val;
+          document.getElementById('settingNewCardsPerDay').value = val;
+          saveState();
+          renderCurrentSrsCard();
+        });
+
+        // Phím tắt bàn phím cho màn hình Ôn tập (Space lật thẻ, 1-4 chấm điểm)
+        window.addEventListener('keydown', e => {
+          const reviewTabActive = document.getElementById('tab-review').classList.contains('active');
+          const modalOpen = document.getElementById('wordDetailModal').classList.contains('open');
+          if (!reviewTabActive || modalOpen) return;
+          if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+
+          if (e.code === 'Space') {
+            e.preventDefault();
+            flipSrsCard();
+          } else if (isCardFlipped && ['1', '2', '3', '4'].includes(e.key)) {
+            e.preventDefault();
+            gradeCurrentSrsCard(parseInt(e.key, 10));
+          }
+        });
+
+        // Sự kiện Quiz
+        document.getElementById('btnStartQuiz').addEventListener('click', startQuiz);
+
+        document.getElementById('quizQuestionContainer').addEventListener('click', e => {
+          const optBtn = e.target.closest('.quiz-option');
+          if (optBtn && !optBtn.disabled) {
+            handleQuizOptionClick(optBtn.getAttribute('data-opt-id'), optBtn);
+            return;
+          }
+          if (e.target.closest('#btnQuizListenAgain')) {
+            const qWord = quizSession.questions[quizSession.currentIndex];
+            if (qWord) speakChinese(qWord.hanzi);
+            return;
+          }
+          // Xử lý click thẻ ghép cặp Matching
+          const matchCard = e.target.closest('.match-card');
+          if (matchCard) {
+            const side = matchCard.getAttribute('data-match-side');
+            const id = matchCard.getAttribute('data-id');
+            if (quizSession.matchingState.matchedIds.has(id)) return;
+
+            document.querySelectorAll(`.match-card[data-match-side="${side}"]`).forEach(c => c.classList.remove('selected'));
+            matchCard.classList.add('selected');
+
+            if (side === 'left') {
+              quizSession.matchingState.selectedLeft = { id, el: matchCard };
+              const w = appState.words.find(x => x.id === id);
+              if (w) speakChinese(w.hanzi);
+            } else {
+              quizSession.matchingState.selectedRight = { id, el: matchCard };
+            }
+
+            const left = quizSession.matchingState.selectedLeft;
+            const right = quizSession.matchingState.selectedRight;
+            if (left && right) {
+              const targetWord = appState.words.find(w => w.id === left.id);
+              if (left.id === right.id) {
+                left.el.classList.remove('selected');
+                right.el.classList.remove('selected');
+                left.el.classList.add('matched');
+                right.el.classList.add('matched');
+                quizSession.matchingState.matchedIds.add(left.id);
+                quizSession.score += 1;
+                if (targetWord) applySm2Review(targetWord, 3);
+                document.getElementById('quizScoreBadge').textContent =
+                  `Đã ghép: ${quizSession.matchingState.matchedIds.size} / ${quizSession.questions.length}`;
+                if (quizSession.matchingState.matchedIds.size === quizSession.questions.length) {
+                  setTimeout(finishQuiz, 600);
+                }
+              } else {
+                left.el.classList.add('error');
+                right.el.classList.add('error');
+                if (targetWord) {
+                  quizSession.wrongWords.push(targetWord);
+                  applySm2Review(targetWord, 1);
+                }
+                setTimeout(() => {
+                  left.el.classList.remove('selected', 'error');
+                  right.el.classList.remove('selected', 'error');
+                }, 500);
+              }
+              quizSession.matchingState.selectedLeft = null;
+              quizSession.matchingState.selectedRight = null;
+            }
+          }
+        });
+
+        // Submit form điền Pinyin trong Quiz
+        document.getElementById('quizQuestionContainer').addEventListener('submit', e => {
+          if (e.target.id !== 'quizPinyinForm') return;
+          e.preventDefault();
+          const qWord = quizSession.questions[quizSession.currentIndex];
+          if (!qWord) return;
+          const inp = document.getElementById('quizPinyinInput');
+          const fb = document.getElementById('quizPinyinFeedback');
+          if (!inp || inp.disabled) return;
+          inp.disabled = true;
+
+          const isOk = checkPinyinMatch(inp.value, qWord.pinyin);
+          if (isOk) {
+            quizSession.score += 1;
+            applySm2Review(qWord, 3);
+            speakChinese(qWord.hanzi);
+            fb.innerHTML = `<span style="color:var(--success); font-weight:700;">✅ Chính xác! ${escapeHtml(qWord.pinyin)}</span>`;
+          } else {
+            quizSession.wrongWords.push(qWord);
+            applySm2Review(qWord, 1);
+            fb.innerHTML = `<span style="color:var(--danger); font-weight:700;">❌ Chưa đúng. Đáp án chuẩn: ${escapeHtml(qWord.pinyin)}</span>`;
+          }
+          setTimeout(() => {
+            quizSession.currentIndex += 1;
+            renderQuizQuestion();
+          }, 1300);
+        });
+
+        // Nút đưa các từ sai vào ôn lại ngay ở cuối Quiz
+        document.getElementById('quizResultArea').addEventListener('click', e => {
+          const speakBtn = e.target.closest('button[data-action="speak"]');
+          if (speakBtn) {
+            const w = appState.words.find(x => x.id === speakBtn.getAttribute('data-id'));
+            if (w) speakChinese(w.hanzi);
+            return;
+          }
+          if (e.target.closest('#btnSendWrongToReview')) {
+            const today = getTodayStr(0);
+            quizSession.wrongWords.forEach(w => {
+              w.srs.dueDate = today;
+              w.srs.interval = 0;
+            });
+            saveState();
+            showToast('Đã đưa toàn bộ từ sai vào danh sách Ôn hôm nay!');
+            document.querySelector('.tab-btn[data-tab="review"]').click();
+          }
+        });
+
+        // Sự kiện Tab AI
+        document.getElementById('btnGoToSettingsFromAi').addEventListener('click', () => {
+          document.querySelector('.tab-btn[data-tab="settings"]').click();
+        });
+        document.getElementById('btnGenerateSingleAi').addEventListener('click', () => {
+          const id = document.getElementById('aiSingleWordSelect').value;
+          if (id) generateSingleWordAi(id);
+        });
+        document.getElementById('btnViewSavedAi').addEventListener('click', () => {
+          const id = document.getElementById('aiSingleWordSelect').value;
+          const word = appState.words.find(w => w.id === id);
+          document.getElementById('aiSingleResultContainer').innerHTML = renderSavedAiHtml(word);
+        });
+        document.getElementById('btnSelectRandomWords').addEventListener('click', () => {
+          const boxes = Array.from(document.querySelectorAll('.ai-multi-checkbox'));
+          boxes.forEach(b => { b.checked = false; });
+          shuffleArray(boxes).slice(0, 5).forEach(b => { b.checked = true; });
+        });
+        document.getElementById('btnClearSelectedWords').addEventListener('click', () => {
+          document.querySelectorAll('.ai-multi-checkbox').forEach(b => { b.checked = false; });
+        });
+        document.getElementById('btnGenerateMultiAi').addEventListener('click', generateMultiWordsAi);
+
+        // Nghe câu ví dụ AI khi bấm nút loa
+        document.body.addEventListener('click', e => {
+          const speakTextBtn = e.target.closest('button[data-speak-text]');
+          if (speakTextBtn) {
+            speakChinese(speakTextBtn.getAttribute('data-speak-text'));
+          }
+        });
+
+        // Sự kiện trong Modal HanziWriter
+        document.getElementById('btnCloseModal').addEventListener('click', () => {
+          document.getElementById('wordDetailModal').classList.remove('open');
+        });
+        document.getElementById('wordDetailModal').addEventListener('click', e => {
+          if (e.target.id === 'wordDetailModal') {
+            document.getElementById('wordDetailModal').classList.remove('open');
+            return;
+          }
+          const animBtn = e.target.closest('button[data-writer-animate]');
+          if (animBtn) {
+            const idx = parseInt(animBtn.getAttribute('data-writer-animate'), 10);
+            if (activeHanziWriters[idx]) activeHanziWriters[idx].animateCharacter();
+          }
+          const quizBtn = e.target.closest('button[data-writer-quiz]');
+          if (quizBtn) {
+            const idx = parseInt(quizBtn.getAttribute('data-writer-quiz'), 10);
+            if (activeHanziWriters[idx]) {
+              showToast('Hãy dùng chuột hoặc ngón tay tô theo thứ tự nét viết trong ô!');
+              activeHanziWriters[idx].quiz();
+            }
+          }
+        });
+
+        // Sự kiện Tab Cài đặt
+        const syncHskLevel = val => {
+          appState.settings.hskLevel = val;
+          document.getElementById('headerHskSelect').value = val;
+          document.getElementById('settingHskLevel').value = val;
+          saveState();
+          updateAiTabVisibility();
+        };
+        document.getElementById('headerHskSelect').addEventListener('change', e => syncHskLevel(e.target.value));
+        document.getElementById('settingHskLevel').addEventListener('change', e => syncHskLevel(e.target.value));
+
+        document.getElementById('settingSpeechRate').addEventListener('input', e => {
+          const rate = parseFloat(e.target.value) || 0.9;
+          appState.settings.speechRate = rate;
+          document.getElementById('speechRateLabel').textContent = `${rate.toFixed(1)}x`;
+          saveState();
+        });
+
+        document.getElementById('settingNewCardsPerDay').addEventListener('change', e => {
+          const val = Math.max(1, parseInt(e.target.value, 10) || 15);
+          appState.settings.newCardsPerDay = val;
+          document.getElementById('srsDailyNewLimit').value = val;
+          saveState();
+          buildReviewQueue();
+        });
+
+        document.getElementById('btnTestSpeech').addEventListener('click', () => {
+          speakChinese('你好，欢迎学习中文！');
+        });
+
+        document.getElementById('btnSaveApiSettings').addEventListener('click', () => {
+          appState.settings.geminiApiKey = document.getElementById('settingGeminiKey').value.trim();
+          appState.settings.geminiModel = document.getElementById('settingGeminiModel').value;
+          saveState();
+          updateAiTabVisibility();
+          showToast('Đã lưu cấu hình Gemini API Key cục bộ!');
+        });
+
+        document.getElementById('btnClearApiKey').addEventListener('click', () => {
+          appState.settings.geminiApiKey = '';
+          document.getElementById('settingGeminiKey').value = '';
+          saveState();
+          updateAiTabVisibility();
+          showToast('Đã xóa Gemini API Key khỏi trình duyệt.');
+        });
+
+        // Sự kiện Đồng bộ đám mây tự động (GitHub Gist)
+        document.getElementById('btnConnectCloudSync').addEventListener('click', () => {
+          appState.settings.githubToken = document.getElementById('settingGithubToken').value.trim();
+          appState.settings.gistId = document.getElementById('settingGistId').value.trim();
+          appState.settings.autoCloudSync = document.getElementById('settingAutoCloudSync').checked;
+          if (!appState.settings.githubToken) {
+            showToast('Hãy nhập GitHub Personal Access Token (có quyền gist) trước!');
+            return;
+          }
+          saveState({ skipCloud: true });
+          pushToGithubGist(false);
+        });
+
+        document.getElementById('btnPullCloudSync').addEventListener('click', () => {
+          appState.settings.githubToken = document.getElementById('settingGithubToken').value.trim();
+          appState.settings.gistId = document.getElementById('settingGistId').value.trim();
+          if (!appState.settings.githubToken || !appState.settings.gistId) {
+            showToast('Cần nhập cả GitHub Token và Gist ID để tải dữ liệu từ đám mây về!');
+            return;
+          }
+          saveState({ skipCloud: true });
+          pullFromGithubGist(false);
+        });
+
+        document.getElementById('settingAutoCloudSync').addEventListener('change', e => {
+          appState.settings.autoCloudSync = e.target.checked;
+          saveState({ skipCloud: true });
+        });
+
+        // Sự kiện Liên kết trực tiếp 1 file JSON trên máy tính (File System Access API)
+        document.getElementById('btnLinkLocalFile').addEventListener('click', async () => {
+          if (!('showSaveFilePicker' in window)) {
+            showToast('Trình duyệt này không hỗ trợ ghi file trực tiếp (Hãy dùng Chrome, Edge hoặc Brave trên máy tính, hoặc dùng Đồng bộ Đám mây GitHub Gist ở cột bên trái).');
+            return;
+          }
+          try {
+            linkedFileHandle = await window.showSaveFilePicker({
+              suggestedName: 'hanzi_srs_auto_sync.json',
+              types: [{
+                description: 'JSON Data File',
+                accept: { 'application/json': ['.json'] }
+              }]
+            });
+            await writeToLinkedLocalFile();
+            document.getElementById('localFileSyncStatusText').textContent = `✅ Đang tự động ghi đè trực tiếp vào file: ${linkedFileHandle.name}`;
+            document.getElementById('localFileSyncStatusText').style.color = 'var(--success)';
+            document.getElementById('btnUnlinkLocalFile').style.display = 'inline-flex';
+            showToast(`Đã liên kết file "${linkedFileHandle.name}"! Mọi thay đổi từ nay sẽ tự động lưu thẳng vào file này.`);
+          } catch (err) {
+            if (err && err.name !== 'AbortError') {
+              showToast('Không thể liên kết file: ' + err.message);
+            }
+          }
+        });
+
+        document.getElementById('btnUnlinkLocalFile').addEventListener('click', () => {
+          linkedFileHandle = null;
+          document.getElementById('localFileSyncStatusText').textContent = 'Đã ngắt liên kết file trực tiếp.';
+          document.getElementById('localFileSyncStatusText').style.color = 'var(--text-secondary)';
+          document.getElementById('btnUnlinkLocalFile').style.display = 'none';
+          updateSyncIndicator('💾 Đã lưu tự động', 'default');
+          showToast('Đã ngắt liên kết tự động ghi file.');
+        });
+
+        // Xuất / Nhập JSON & Khôi phục mẫu
+        document.getElementById('btnExportJson').addEventListener('click', exportDataToJson);
+
+        document.getElementById('inputImportJson').addEventListener('change', e => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = ev => {
+            try {
+              const imported = JSON.parse(ev.target.result);
+              if (!imported || !Array.isArray(imported.words)) {
+                throw new Error('Cấu trúc file JSON không hợp lệ.');
+              }
+              appState.words = imported.words;
+              if (imported.settings) {
+                appState.settings = Object.assign({}, appState.settings, imported.settings);
+              }
+              if (imported.stats) {
+                appState.stats = Object.assign({}, appState.stats, imported.stats);
+              }
+              saveState();
+              syncSettingsToInputs();
+              renderVocabList();
+              renderCurrentSrsCard();
+              renderStats();
+              showToast(`Đã nạp thành công ${appState.words.length} từ vựng từ file sao lưu!`);
+            } catch (err) {
+              showToast('Lỗi đọc file JSON: ' + err.message);
+            }
+          };
+          reader.readAsText(file);
+          e.target.value = '';
+        });
+
+        document.getElementById('btnResetSampleData').addEventListener('click', () => {
+          const existingIds = new Set(appState.words.map(w => w.hanzi));
+          const samples = getInitialSampleWords();
+          let added = 0;
+          samples.forEach(s => {
+            if (!existingIds.has(s.hanzi)) {
+              appState.words.push(s);
+              added += 1;
+            }
+          });
+          saveState();
+          renderVocabList();
+          buildReviewQueue();
+          showToast(added > 0 ? `Đã bổ sung ${added} từ mẫu HSK 1 vào sổ từ!` : 'Bộ từ mẫu HSK 1 đã có sẵn trong sổ từ của bạn.');
+        });
+      }
+
+      function syncSettingsToInputs() {
+        applyTheme(appState.settings.theme || 'system');
+        document.getElementById('headerHskSelect').value = appState.settings.hskLevel || '2';
+        document.getElementById('settingHskLevel').value = appState.settings.hskLevel || '2';
+        document.getElementById('settingSpeechRate').value = appState.settings.speechRate || 0.9;
+        document.getElementById('speechRateLabel').textContent = `${(appState.settings.speechRate || 0.9).toFixed(1)}x`;
+        document.getElementById('settingNewCardsPerDay').value = appState.settings.newCardsPerDay || 15;
+        document.getElementById('srsDailyNewLimit').value = appState.settings.newCardsPerDay || 15;
+        document.getElementById('srsModeSelect').value = appState.settings.srsMode || 'HANZI_TO_MEANING';
+        document.getElementById('settingGeminiKey').value = appState.settings.geminiApiKey || '';
+        document.getElementById('settingGeminiModel').value = appState.settings.geminiModel || 'gemini-2.5-flash';
+        document.getElementById('settingGithubToken').value = appState.settings.githubToken || '';
+        document.getElementById('settingGistId').value = appState.settings.gistId || '';
+        document.getElementById('settingAutoCloudSync').checked = appState.settings.autoCloudSync !== false;
+        if (appState.settings.hideBackupBanner) {
+          document.getElementById('backupBanner').style.display = 'none';
+        }
+      }
+
+      // Khởi chạy ứng dụng khi tải trang
+      loadState();
+      syncSettingsToInputs();
+      initEvents();
+      renderVocabList();
+      renderCurrentSrsCard();
+      updateAiTabVisibility();
+      renderStats();
+      // Nếu đã cấu hình GitHub Gist Auto-Sync -> tự động kéo dữ liệu mới nhất về khi mở ứng dụng
+      if (appState.settings.autoCloudSync && (appState.settings.githubToken || '').trim() && (appState.settings.gistId || '').trim()) {
+        pullFromGithubGist(true);
+      }
+    })();
+  </script>
+</body>
+</html>
